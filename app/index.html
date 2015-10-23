@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Street View side-by-side</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: arial;
+        overflow: hidden;
+      }
+      #pano {
+        top: -3%;
+        left: -15%;
+        height: 106%;
+        width: 90%;
+      }
+      #map {
+        position: absolute;
+        top: -15%;
+        right: 0;
+        width: 30%;
+        height: 130%;
+      }
+
+      #info {
+        position: absolute;
+        right: 1% ;
+        width: 10%;
+        bottom: 1%;
+
+        background-color: white;
+        padding: 1%;
+      }
+      #info p { margin: 0;}
+      .description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+                height: 5%;
+
+      }
+      .name {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="pano"></div>
+    <div id="map"></div>
+    <div id="info">
+      <p class="name"></p>
+      <p class="description"></p>
+    </div>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBOIFN7R8DHFD4xx93E9HsxwowvrW-H5Zg&signed_in=true&callback=initialize">
+    </script>
+    <script src="/bower_components/jquery/dist/jquery.js"></script>
+    <script src="/bower_components/lodash/lodash.min.js"></script>
+
+    <script src="scripts/main.js"></script>
+  </body>
+</html>
