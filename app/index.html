@@ -2,13 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Street View side-by-side</title>
+    <title>geo slideshow</title>
     <style>
       html, body {
         height: 100%;
         margin: 0;
         padding: 0;
-        font-family: arial;
+        font-family: courier;
         overflow: hidden;
       }
       #pano {
@@ -19,16 +19,16 @@
       }
       #map {
         position: absolute;
-        top: -15%;
+        top: -10%;
         right: 0;
         width: 30%;
-        height: 130%;
+        height: 120%;
       }
 
       #info {
         position: absolute;
         right: 1% ;
-        width: 10%;
+        width: 26%;
         bottom: 1%;
 
         background-color: white;
@@ -38,22 +38,47 @@
       .description {
         overflow: hidden;
         text-overflow: ellipsis;
-                height: 5%;
-
+      }
+      .short {
+        height: 5%;
+        white-space: nowrap;
       }
       .name {
         font-weight: bold;
       }
+
+      .splash {
+        padding: 10px;
+        width: 200px;
+        height: 50%;
+        position: absolute;
+        top: 25%;
+        left: 50%;
+
+        margin: -150px 0 0 -100px;
+        background: white
+      }
+       .splash h1, .splash p {text-align: center;}
     </style>
   </head>
   <body>
+
     <div id="pano"></div>
     <div id="map"></div>
     <div id="info">
       <p class="name"></p>
-      <p class="description"></p>
+      <p class="description short"></p>
     </div>
+    <div class="splash">
+        <h1>GEO SLIDESHOW</h1>
+        <ul>
+          <li><strong>j</strong> for next</li>
+          <li><strong>k</strong> for previous</li>
+          <li><strong>zoom out</strong> to see all place you visited </li>
+        </ul>
 
+        <p> click to close this window</p>
+    </div>
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBOIFN7R8DHFD4xx93E9HsxwowvrW-H5Zg&signed_in=true&callback=initialize">
     </script>
