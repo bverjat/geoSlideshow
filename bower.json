@@ -2,7 +2,8 @@
   "name": "hft-atlas",
   "private": true,
   "dependencies": {
-    "bootstrap-sass": "~3.3.5"
+    "bootstrap-sass": "~3.3.5",
+    "lodash": "~3.10.1"
   },
   "overrides": {
     "bootstrap-sass": {
