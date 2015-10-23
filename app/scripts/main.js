@@ -59,7 +59,7 @@ function initialize() {
       curPointId += dir;
 
       curPoint = points[curPointId%points.length];
-      sv.getPanorama({location:curPoint, radius: 10000}, processSVData);
+      sv.getPanorama({location:curPoint, radius: 500}, processSVData);
       map.setCenter(curPoint);
 
       console.log(curPointId, curPoint);
