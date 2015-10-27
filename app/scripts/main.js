@@ -1,5 +1,6 @@
 function initialize() {
   $.getJSON( "data/data.json", function(data) {
+    $( ".splash" ).removeClass('hide');
 
     var points = _(data.features)
       .filter(function(p){
@@ -14,7 +15,7 @@ function initialize() {
           "description": p.properties.description
         }
       }).value();
-    var curPoint, curPointId = _.random(0,points.length), dir = 1;
+    var curPoint, curPointId = _.random(0,points.length), dir = 1, curViewPointMarker;
 
     console.log("points:", points.length,points);
 
@@ -31,15 +32,22 @@ function initialize() {
 
     // user events
 
-    $( ".splash" ).on( "click", function() { $( this ).hide()});
+    $( ".splash" ).on( "click", clearSplash);
     $( ".description").hover(function(){
       $( this ).removeClass("short");
     },function(){
       $( this ).addClass("short");
     });
 
+    function clearSplash(){
+      $( ".splash" ).addClass('hide');
+    }
+
 
     $( "body" ).keypress(function( event ) {
+
+      clearSplash();
+
       if ( event.which == 106 ) {
         dir = 1;
         nextPoint();
@@ -48,6 +56,14 @@ function initialize() {
         dir = -1;
         nextPoint();
       }
+      if ( event.which == 115 ) {
+        var url = 'http://maps.google.com/maps?q=&layer=c&cbll='
+        +curViewPointMarker.getPosition().lat()+','+curViewPointMarker.getPosition().lng();
+        var win = window.open(url, '_blank');
+        win.focus();
+      }
+      // if ( )
+
     });
 
     // go to first point
@@ -74,6 +90,8 @@ function initialize() {
           map: map,
           position: data.location.latLng
         });
+
+        curViewPointMarker = viewpointMarker;
 
         var targetMarker = new google.maps.Marker({
           map: map,
