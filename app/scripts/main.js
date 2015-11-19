@@ -117,7 +117,7 @@ function initialize() {
 
         // change description
         $(".description").html(curPoint.description  +'<br> lat:'+ curPoint.lat + 'lng' + curPoint.lng);
-        $(".name").text(curPointId+' — ' + curPoint.name );
+        $(".name").text(curPointId+'/'+points.length+' — ' + curPoint.name );
 
 
         if (status !== google.maps.StreetViewStatus.OK) {
@@ -127,3 +127,14 @@ function initialize() {
     }
   })
 }
+
+function loadScript(src,callback){
+  var script = document.createElement("script");
+  script.type = "text/javascript";
+  if(callback)script.onload=callback;
+  document.getElementsByTagName("head")[0].appendChild(script);
+  script.src = src;
+}
+
+loadScript('http://maps.googleapis.com/maps/api/js?v=3&sensor=false&callback=initialize',
+              function(){console.log('google-loader has been loaded, but not the maps-API ');});
