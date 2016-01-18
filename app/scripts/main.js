@@ -2,7 +2,7 @@ function initialize() {
   $.getJSON( "data/data.json", function(data) {
     $( ".splash" ).removeClass('hide');
 
-    var points = _(data.features)
+    var points = _(data.≈)
       .filter(function(p){
         return  _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
       })
@@ -62,8 +62,6 @@ function initialize() {
         var win = window.open(url, '_blank');
         win.focus();
       }
-      // if ( )
-
     });
 
     // go to first point
@@ -116,9 +114,8 @@ function initialize() {
         viewpointMarker.setMap(null);
 
         // change description
-        $(".description").html(curPoint.description  +'<br> lat:'+ curPoint.lat + 'lng' + curPoint.lng);
+        $(".description").html(curPoint.description  +'<br> lat,lng:'+ curPoint.lat + ',' + curPoint.lng);
         $(".name").text(curPointId+'/'+points.length+' — ' + curPoint.name );
-
 
         if (status !== google.maps.StreetViewStatus.OK) {
           console.error('Street View data not found for this location.');

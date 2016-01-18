@@ -1,0 +1,25 @@
+{
+  "name": "geoslideshow",
+  "version": "1.0.0",
+  "description": "Turn geoJson into street view slideshow",
+  "main": "getActivity.js",
+  "dependencies": {
+    "lodash": "^4.0.0",
+    "twitter-node-client": "^0.0.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./getActivity.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bverjat/geoSlideshow.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bverjat/geoSlideshow/issues"
+  },
+  "homepage": "https://github.com/bverjat/geoSlideshow#readme"
+}

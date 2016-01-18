@@ -4,6 +4,7 @@ dist
 .sass-cache
 bower_components
 app/data
+twitterConfig.json
 
 # Windows image file caches
 Thumbs.db
