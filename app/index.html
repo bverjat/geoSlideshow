@@ -3,68 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>geo slideshow</title>
-    <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        font-family: courier;
-        overflow: hidden;
-      }
-      #pano {
-        top: -3%;
-        left: -15%;
-        height: 106%;
-        width: 90%;
-      }
-      #map {
-        position: absolute;
-        top: -10%;
-        right: 0;
-        width: 30%;
-        height: 120%;
-      }
-
-      #info {
-        position: absolute;
-        right: 1% ;
-        width: 26%;
-        bottom: 1%;
-
-        background-color: white;
-        padding: 1%;
-      }
-      #info p { margin: 0;}
-      .description {
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .short {
-        height: 5%;
-        white-space: nowrap;
-      }
-      .name {
-        font-weight: bold;
-      }
-
-      .splash {
-        padding: 10px;
-        width: 500px;
-        height: 90%;
-        position: absolute;
-        top: 5%;
-        left: 50%;
-
-        margin-left: -250px;
-        background: white
-      }
-
-      .hide {
-        display: none;
-      }
-       .splash h1, .splash p {text-align: center;}
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="assets/css/screen.css">
   </head>
   <body>
     loading … (reload if too long)
@@ -87,8 +26,7 @@
         </ul>
         <p> click to close this window</p>
     </div>
-    <script src="../bower_components/jquery/dist/jquery.js"></script>
-    <script src="../bower_components/lodash/lodash.min.js"></script>
-    <script src="scripts/main.js"></script>
+    <script src="assets/js/lib.min.js"></script>
+    <script src="assets/js/main.js"></script>
   </body>
 </html>
