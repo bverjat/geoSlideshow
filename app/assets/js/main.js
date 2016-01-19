@@ -4,7 +4,6 @@ function initialize() {
   $.getJSON( 'data/data-tweets.json', function(data) {
     // $( '.splash' ).removeClass('hide');
 
-
     var tree = new Baobab({
 
       points:getPoints(data.features),
@@ -12,10 +11,9 @@ function initialize() {
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
         return points[id % points.length] || null;
       }),
-
       targetMarker:{}
 
-    });
+    },{lazyMonkeys:false});
     window.tree = tree;
 
     var point = tree.select('point');
@@ -28,11 +26,16 @@ function initialize() {
 
           $('#activity').html(templates.activity( tree.get() ));
           $('#pointInfo').html(templates.pointInfo( tree.get() ));
-          $('#currentId').val(tree.get('pointId'));
+
+          $('#currentId, #slideId').val(tree.get('pointId'));
 
         })
 
     var templates = getTemplates();
+
+    tree.set('pointId',_.random(0,tree.get('points').length))
+
+    $( '#slideId' ).attr('max', tree.get('points').length );
 
     // create google maps objects
     var map = new google.maps.Map(document.getElementById('map'), {
@@ -42,21 +45,17 @@ function initialize() {
       mapTypeId: google.maps.MapTypeId.SATELLITE
     });
 
+    var targetMarkerIndex = getMarkers(tree.get('points'), map);
+
     var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
     var sv = new google.maps.StreetViewService();
 
     function processSVData(data, status) {
 
-      if (_.isNull(data)) {
-        tree.select('pointId').apply(next);
-      }else{
+      if (!_.isNull(data)) {
 
         var viewpointMarker = new google.maps.Marker({ map: map, position: data.location.latLng });
-        var targetMarker = new google.maps.Marker({
-          map: map,
-          position: point.get(),
-          icon: 'https://google-developers.appspot.com/maps/documentation/javascript/examples/full/images/beachflag.png'
-        });
+        var targetMarker = targetMarkerIndex[point.get('id')];
 
         // panorama
         var heading = google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition());
@@ -77,20 +76,20 @@ function initialize() {
       }
     }
   })
+
+
 }
 
-
-
 // user events
+
+
 $( '.splash' ).on( 'click', clearSplash);
 $( '.description').hover(
   function(){$(this).removeClass('short');},
   function(){$(this).addClass('short');}
 );
 
-$( "#currentId" ).change(function() {
-  tree.set('pointId', parseInt( $( this ).val() ) );
-});
+$( "#currentId, #slideId" ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
 
 $( 'body' ).keypress(function( event ) {
 
@@ -108,13 +107,7 @@ $( 'body' ).keypress(function( event ) {
 
 function clearSplash(){ $( '.splash' ).addClass('hide'); }
 
-function loadScript(src,callback){
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  if(callback)script.onload=callback;
-  document.getElementsByTagName('head')[0].appendChild(script);
-  script.src = src;
-}
+
 
 function getTemplates(){
   var t = [];
@@ -130,19 +123,51 @@ function getPoints(data){
     .filter(function(p){
       return  _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
     })
-    .sortBy(function(d){return d.properties.name;})
-    .map(function(p){
+    .map(function(p , i){
       return {
+        id: i,
         lat: p.geometry.coordinates[1],
         lng: p.geometry.coordinates[0],
         name: p.properties.name,
         description: p.properties.description,
         statuses: _.get(p,'res.statuses', [])
       }
-    }).value();
+    })
+    .sortBy(function(d){return -d.statuses.length;})
+
+    .value();
+}
+
+function getMarkers(pts, map){
+   return _(pts).indexBy('id').map(function(p){
+      return new google.maps.Marker({
+        map: map,
+        position: p,
+        icon: 'assets/images/beachflag.png'
+      });
+    }).value()
 }
 
 var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
 
+function loadScript(src,callback){
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  if(callback)script.onload=callback;
+  document.getElementsByTagName('head')[0].appendChild(script);
+  script.src = src;
+}
+
+Handlebars.registerHelper("debug", function(optionalValue) {
+  console.log("Current Context");
+  console.log("====================");
+  console.log(this);
+
+  if (optionalValue) {
+    console.log("Value");
+    console.log("====================");
+    console.log(optionalValue);
+  }
+});
 

@@ -26,7 +26,7 @@ async.eachSeries(pts, function iterator(item, next) {
 
   twitter.getSearch({
     'q':' ',
-    'geocode':''+coordinates[0]+','+coordinates[1]+',50km',
+    'geocode':''+coordinates[0]+','+coordinates[1]+',30km',
     'count': 100,
     'result\_type':'recent'
   }, error, function(data){

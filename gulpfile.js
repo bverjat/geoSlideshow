@@ -27,11 +27,18 @@ gulp.task('build', function() {
     .pipe(gulp.dest('./app/assets/js/'));
 });
 
-gulp.task('serve', ['less'], function() {
+gulp.task('serve', ['less','fonts','build'], function() {
     browserSync.init({server: "./app"});
     gulp.watch('./app/assets/less/*.less', ['less']);
     gulp.watch("app/*.html").on('change', browserSync.reload);
     gulp.watch("app/assets/js/*.js").on('change', browserSync.reload);
 });
+
+// copy fonts
+gulp.task('fonts', function() {
+  return gulp.src(['./bower_components/bootstrap/dist/fonts/glyphicons*.*'])
+          .pipe(gulp.dest('app/assets/fonts/'));
+});
+
 
 gulp.task('default', [ 'less', 'fonts', 'build']);

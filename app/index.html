@@ -6,10 +6,30 @@
     <link rel="stylesheet" type="text/css" href="assets/css/screen.css">
   </head>
   <body>
-    loading … (reload if too long)
-    <div id="pano"></div>
-    <div id="map"></div>
-    <div id="pointInfo"></div>
+    <div class="row" id="geo" >
+      <div id="pano" class="col-sm-8"></div>
+      <div id="map"  class="col-sm-4"></div>
+    </div>
+
+    <div class="container-fluid">
+
+      <div id="controls" class="row">
+        <div class="col-sm-2">
+          <input  id="currentId" class="form-control"  type="number" value="0" maxlength="4" size="4" step="1" >
+        </div>
+        <div class="col-sm-10">
+          <input id="slideId" class="form-control" type="range"  value="0" min="0" max="500" step="1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-9" id="activity"></div>
+        <div class="col-sm-2" id="pointInfo"></div>
+      </div>
+
+    </div>
+
+
     <div class="splash hide">
         <h1>GEO SLIDESHOW</h1>
         <hr>
@@ -23,19 +43,44 @@
         </ul>
         <p> click to close this window</p>
     </div>
-    <div id="activity"></div>
-    <input type="number" id="currentId" name="number" step="1">
 
     <script src="assets/js/lib.min.js"></script>
     <script src="assets/js/main.js"></script>
 
     <script id="activity" type="text/x-handlebars-template">
-        <h1>{{title}}</h1>
+      <div class="row">
+        <h5>images</h5>
+        {{#each point.statuses}}
+          {{#each entities.media}}
+            <a href="{{media_url}}"> <img src="{{media_url}}" class="col-sm-3" /> </a>
+          {{/each}}
+        {{/each}}
+      </div>
+      <div class="row">
+        <h5>hashtags</h5>
+        {{#each point.statuses}}
+          {{#each entities.hashtags}}
+            #{{text}}
+          {{/each}}
+        {{/each}}
+      </div>
+      <div class="row">
+        <h5>status ({{point.statuses.length}})</h5>
+        {{#each point.statuses}}
+          <li>{{text}}</li>
+          {{#each entities.media}}
+              {{media_url}}
+              <img src="{{media_url}}" width="25px" />
+          {{/each}}
+        {{/each}}
+      </div>
     </script>
 
     <script id="pointInfo" type="text/x-handlebars-template">
-      <p class="name">{{description}} lat,lng {{lat}},{{lng}}</p>
-      <p class="description short">{{name}} </p>
+      {{debug}}
+      <h5>{{point.name}}</h5>
+      <input type="text" value="{{point.lat}},{{point.lng}}"/>
+      <p>{{{point.description}}} </p>
     </script>
 
   </body>
