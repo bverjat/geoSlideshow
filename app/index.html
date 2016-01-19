@@ -9,10 +9,7 @@
     loading … (reload if too long)
     <div id="pano"></div>
     <div id="map"></div>
-    <div id="info">
-      <p class="name"></p>
-      <p class="description short"></p>
-    </div>
+    <div id="pointInfo"></div>
     <div class="splash hide">
         <h1>GEO SLIDESHOW</h1>
         <hr>
@@ -26,7 +23,20 @@
         </ul>
         <p> click to close this window</p>
     </div>
+    <div id="activity"></div>
+    <input type="number" id="currentId" name="number" step="1">
+
     <script src="assets/js/lib.min.js"></script>
     <script src="assets/js/main.js"></script>
+
+    <script id="activity" type="text/x-handlebars-template">
+        <h1>{{title}}</h1>
+    </script>
+
+    <script id="pointInfo" type="text/x-handlebars-template">
+      <p class="name">{{description}} lat,lng {{lat}},{{lng}}</p>
+      <p class="description short">{{name}} </p>
+    </script>
+
   </body>
 </html>
