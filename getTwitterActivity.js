@@ -16,7 +16,6 @@ const pts = _(points.features)
     .filter('type','Feature')
     .filter(function(d){return d.geometry.type === 'Point'})
     .filter(function(d){ return !_.isUndefined(d.geometry.coordinates) })
-    // .slice(0,3)
     .value();
 
 async.eachSeries(pts, function iterator(item, next) {
@@ -26,7 +25,7 @@ async.eachSeries(pts, function iterator(item, next) {
 
   twitter.getSearch({
     'q':' ',
-    'geocode':''+coordinates[0]+','+coordinates[1]+',30km',
+    'geocode':''+coordinates[0]+','+coordinates[1]+',10km',
     'count': 100,
     'result\_type':'recent'
   }, error, function(data){

@@ -73,6 +73,9 @@ function initialize() {
         // unset pegman marker
         viewpointMarker.setMap(null);
         if (status !== google.maps.StreetViewStatus.OK) console.error('Street View data not found for this location.');
+
+      }else{
+        panorama.setPov({pitch:90})
       }
     }
   })
@@ -121,21 +124,44 @@ function getPoints(data){
 
   return _(data)
     .filter(function(p){
+      // remove not numeric coordinates
       return  _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
     })
+    .uniq(function(p){
+      // remove to close points
+      return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
+    })
     .map(function(p , i){
+      // get clean object from geojson
       return {
         id: i,
         lat: p.geometry.coordinates[1],
         lng: p.geometry.coordinates[0],
         name: p.properties.name,
         description: p.properties.description,
-        statuses: _.get(p,'res.statuses', [])
+        statuses: _.get(p,'res.statuses', []),
+        hashtags:getHashTags(_.get(p,'res.statuses', []))
       }
     })
     .sortBy(function(d){return -d.statuses.length;})
-
     .value();
+}
+
+function round(value, decimals) {
+    return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+function getHashTags(statuses){
+
+  var hashtags = [];
+
+  statuses.forEach(function(s){
+    _.get(s, ['entities','hashtags']).forEach(function(h){
+      hashtags.push('#'+h.text)
+    })
+  })
+
+  return _.uniq(hashtags)
 }
 
 function getMarkers(pts, map){

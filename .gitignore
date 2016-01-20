@@ -5,6 +5,7 @@ dist
 bower_components
 app/data
 twitterConfig.json
+*Config.json
 app/assets/fonts/
 
 # Windows image file caches

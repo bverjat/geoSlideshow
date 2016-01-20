@@ -57,12 +57,11 @@
         {{/each}}
       </div>
       <div class="row">
-        <h5>hashtags</h5>
-        {{#each point.statuses}}
-          {{#each entities.hashtags}}
-            #{{text}}
-          {{/each}}
+        <h5>hashtags :
+        {{#each point.hashtags}}
+          {{this}}
         {{/each}}
+        </h5>
       </div>
       <div class="row">
         <h5>status ({{point.statuses.length}})</h5>
