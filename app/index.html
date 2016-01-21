@@ -10,9 +10,9 @@
       <div id="pano" class="col-sm-8"></div>
       <div id="map"  class="col-sm-4"></div>
     </div>
+      <div class="instagram"></div>
 
     <div class="container-fluid">
-      <div class="instagram"></div>
       <div id="controls" class="row">
         <div class="col-sm-1">
           <input  id="currentId" class="form-control"  type="number" value="0" maxlength="4" size="4" step="1" >
@@ -58,7 +58,6 @@
 
     <script id="activity" type="text/x-handlebars-template">
       <div class="row">
-
         <h5>hashtags : {{#each point.hashtags}} {{this}} {{/each}}</h5>
       </div>
 
@@ -92,6 +91,5 @@
     <script id="instagramFeed" type="text/x-handlebars-template">
       {{#each data}}<a href="{{images.standard_resolution.url}}"><img src="{{images.thumbnail.url}}"></a>{{/each}}
     </script>
-
   </body>
 </html>

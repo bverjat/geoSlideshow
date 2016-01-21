@@ -83,14 +83,8 @@ function initialize() {
 
         // unset pegman marker
         viewpointMarker.setMap(null);
-        if (status !== google.maps.StreetViewStatus.OK) console.error('Street View data not found for this location.');
-
-      }else{
-        panorama.setPov({pitch:180})
       }
     }
-
-
     // instagram
     function updateInstagram(){
       $('.instagram').instagram({
