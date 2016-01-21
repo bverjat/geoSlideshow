@@ -6727,28 +6727,36 @@ button.close {
 html,
 body {
   height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
-#geo {
-  height: 40%;
+#instagramFeed {
+  height: 300px;
+  overflow-y: scroll;
 }
-#geo #map,
-#geo #pano {
-  height: 100%;
+#map,
+#pano {
+  height: 30%;
 }
 #currentId {
   width: 100%;
   text-align: center;
 }
 #controls {
-  background-color: royalblue;
+  background-color: black;
   padding-bottom: 0.5em;
   padding-top: 0.5em;
-  font-size: 0.7em;
+  font-size: 0.5em;
 }
 .hide {
   display: none;
 }
 h5 {
   text-align: center;
+}
+#activity {
+  height: 20%;
+}
+#activity .col {
+  height: 100%;
+  overflow-y: scroll;
 }

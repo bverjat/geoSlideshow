@@ -3,13 +3,14 @@
 
 html, body {
   height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-#geo {
-   height: 40%;
-   #map, #pano { height: 100%;}
+#instagramFeed {
+  height: 150px*2;
+  overflow-y: scroll;
 }
+#map, #pano { height: 30%; }
 
 #currentId {
   width: 100%;
@@ -17,14 +18,24 @@ html, body {
 }
 
 #controls {
-  background-color: royalblue;
+  background-color: black;
   padding-bottom: 0.5em;
   padding-top: 0.5em;
-  font-size: 0.7em;
+  font-size: 0.5em;
+
+  // height: 150px;
 }
 
 .hide { display: none; }
 
 h5 {
   text-align: center;
+}
+
+#activity {
+  height: 20%;
+  .col {
+    height: 100%;
+    overflow-y: scroll;
+  }
 }
