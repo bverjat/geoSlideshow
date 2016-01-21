@@ -9,7 +9,8 @@ var jsFiles = [
   './bower_components/jquery/dist/jquery.js',
   './bower_components/lodash/lodash.js',
   './bower_components/handlebars/handlebars.min.js',
-  './bower_components/baobab/build/baobab.js'
+  './bower_components/baobab/build/baobab.js',
+  './bower_components/jquery-instagram/dist/instagram.js'
   ];
 
 gulp.task('less', function() {
@@ -39,6 +40,5 @@ gulp.task('fonts', function() {
   return gulp.src(['./bower_components/bootstrap/dist/fonts/glyphicons*.*'])
           .pipe(gulp.dest('app/assets/fonts/'));
 });
-
 
 gulp.task('default', [ 'less', 'fonts', 'build']);

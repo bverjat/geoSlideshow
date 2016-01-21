@@ -15,6 +15,7 @@ var pts = _(points.features)
     .filter('type','Feature')
     .filter(function(d){return d.geometry.type === 'Point'})
     .filter(function(d){ return !_.isUndefined(d.geometry.coordinates) })
+    .slice(0,3)
     .value();
 
 
@@ -38,12 +39,8 @@ exports.handleauth = function(req, res) {
       res.send('You made it!!');
       api.use({ access_token: result.access_token});
 
-
       var maxTime = Math.floor(Date.now() / 1000);
       var minTime = (maxTime - (60*60*24*30));
-
-
-
 
       async.eachSeries(pts, function iterator(item, next) {
 

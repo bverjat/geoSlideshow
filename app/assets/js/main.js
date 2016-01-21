@@ -1,9 +1,10 @@
 loadScript('http://maps.googleapis.com/maps/api/js?v=3&sensor=false&callback=initialize');
 
 function initialize() {
-  $.getJSON( 'data/data-tweets.json', function(data) {
-    // $( '.splash' ).removeClass('hide');
+  $.getJSON( 'data/data-tweets-save.json', function(data) {
 
+
+    // STATE AND TREE
     var tree = new Baobab({
 
       points:getPoints(data.features),
@@ -11,42 +12,52 @@ function initialize() {
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
         return points[id % points.length] || null;
       }),
+      distance: 2000,
       targetMarker:{}
 
     },{lazyMonkeys:false});
+
     window.tree = tree;
 
     var point = tree.select('point');
         point.on('update', function(e){
+
           var point = e.data.currentData;
+          console.log(point);
+
           sv.getPanorama({location:point, radius: 500}, processSVData);
           map.setCenter(point);
 
-          console.log(point);
-
           $('#activity').html(templates.activity( tree.get() ));
           $('#pointInfo').html(templates.pointInfo( tree.get() ));
-
           $('#currentId, #slideId').val(tree.get('pointId'));
 
+          updateInstagram()
+        })
+
+    var distance = tree.select('distance');
+        distance.on('update', function(){
+          updateInstagram();
+          $("#currentDistance, #slideDistance").val(tree.get('distance'));
         })
 
     var templates = getTemplates();
 
+    // INIT
     tree.set('pointId',_.random(0,tree.get('points').length))
-
+    tree.set('distance', 1500)
     $( '#slideId' ).attr('max', tree.get('points').length );
+
+    $( "#currentId, #slideId" ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
+    $( "#currentDistance, #slideDistance" ).change(function() { tree.set('distance', parseInt( $( this ).val() ) );});
 
     // create google maps objects
     var map = new google.maps.Map(document.getElementById('map'), {
       center: tree.get('points')[0],
-      zoom: 17,
-      streetViewControl: true,
-      mapTypeId: google.maps.MapTypeId.SATELLITE
+      zoom: 17, streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
     });
 
     var targetMarkerIndex = getMarkers(tree.get('points'), map);
-
     var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
     var sv = new google.maps.StreetViewService();
 
@@ -75,29 +86,26 @@ function initialize() {
         if (status !== google.maps.StreetViewStatus.OK) console.error('Street View data not found for this location.');
 
       }else{
-        panorama.setPov({pitch:90})
+        panorama.setPov({pitch:180})
       }
     }
+
+
+    // instagram
+    function updateInstagram(){
+      $('.instagram').instagram({
+        search: { lat: tree.get('point','lat'), lng: tree.get('point','lng'), distance: tree.get('distance')},
+        clientId: 'baee48560b984845974f6b85a07bf7d9'
+      });
+    }
+    $('.instagram').on('didLoadInstagram', function(event, response) {
+      $('#instagramFeed').html(templates.instagramFeed( response ));
+    });
   })
-
-
 }
 
 // user events
-
-
-$( '.splash' ).on( 'click', clearSplash);
-$( '.description').hover(
-  function(){$(this).removeClass('short');},
-  function(){$(this).addClass('short');}
-);
-
-$( "#currentId, #slideId" ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
-
 $( 'body' ).keypress(function( event ) {
-
-  clearSplash();
-
   if ( event.which == 106 ) { tree.select('pointId').apply(next);}
   if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
   if ( event.which == 115 ) {
@@ -107,10 +115,6 @@ $( 'body' ).keypress(function( event ) {
     win.focus();
   }
 });
-
-function clearSplash(){ $( '.splash' ).addClass('hide'); }
-
-
 
 function getTemplates(){
   var t = [];
@@ -143,7 +147,7 @@ function getPoints(data){
         hashtags:getHashTags(_.get(p,'res.statuses', []))
       }
     })
-    .sortBy(function(d){return -d.statuses.length;})
+    // .sortBy(function(d){return -d.statuses.length;})
     .value();
 }
 
