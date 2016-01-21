@@ -13,11 +13,26 @@ function initialize() {
         return points[id % points.length] || null;
       }),
       distance: 2000,
+      heading: 50,
+      pitch: 50,
       targetMarker:{}
 
     },{lazyMonkeys:false});
 
     window.tree = tree;
+
+    var i =0;
+    setInterval(function(){ tree.select('pitch').apply(pitchTilt); },50)
+
+    function updatePanoramaPov(){
+      panorama.setPov({heading:tree.get('heading'), pitch: tree.get('pitch') });
+      map.setStreetView(panorama);
+    }
+
+    function pitchTilt(pitch){
+      var dir = (pitch > 70) ? -1 : 1;
+      return pitch + (dir*0.05)
+    }
 
     var point = tree.select('point');
         point.on('update', function(e){
@@ -25,8 +40,9 @@ function initialize() {
           var point = e.data.currentData;
           console.log(point);
 
-          sv.getPanorama({location:point, radius: 500}, processSVData);
+          sv.getPanorama({location:point, radius: 1000}, processSVData);
           map.setCenter(point);
+
 
           $('#activity').html(templates.activity( tree.get() ));
           $('#pointInfo').html(templates.pointInfo( tree.get() ));
@@ -36,16 +52,20 @@ function initialize() {
         })
 
     var distance = tree.select('distance');
-        distance.on('update', function(){
+        distance.on('update', function(e){
           updateInstagram();
-          $("#currentDistance, #slideDistance").val(tree.get('distance'));
+          $("#currentDistance, #slideDistance").val(e.data.currentData);
         })
+
+    tree.select('pitch').on('update', updatePanoramaPov);
+    tree.select('heading').on('update', updatePanoramaPov);
 
     var templates = getTemplates();
 
     // INIT
     tree.set('pointId',_.random(0,tree.get('points').length))
-    tree.set('distance', 1500)
+    tree.set('distance', 1000);
+
     $( '#slideId' ).attr('max', tree.get('points').length );
 
     $( "#currentId, #slideId" ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
@@ -67,22 +87,26 @@ function initialize() {
 
         var viewpointMarker = new google.maps.Marker({ map: map, position: data.location.latLng });
         var targetMarker = targetMarkerIndex[point.get('id')];
+        viewpointMarker.setMap(null);
 
         // panorama
-        var heading = google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition());
+        tree.set('heading',google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition()))
+
         panorama.setPano(data.location.pano);
-        panorama.setPov({heading:heading, pitch: 5});
         panorama.setVisible(true);
-        map.setStreetView(panorama);
+        // map.setStreetView(panorama);
+        tree.set('pitch',-20)
+
 
         // map bounds
         var bounds = new google.maps.LatLngBounds();
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
-        map.fitBounds(bounds);
-
+        // map.fitBounds(bounds);
+        map.panToBounds(bounds);
         // unset pegman marker
-        viewpointMarker.setMap(null);
+      }else{
+        tree.set('pitch',90)
       }
     }
     // instagram
@@ -92,14 +116,30 @@ function initialize() {
         clientId: 'baee48560b984845974f6b85a07bf7d9'
       });
     }
-    $('.instagram').on('didLoadInstagram', function(event, response) {
+
+    function onInstagramDidLoad(event, response){
+      console.log(response.data)
+
+      // sort by distance from current point
+      response.data = _.sortBy(response.data, function(d){
+        var x1 = d.location.latitude;
+        var y1 = d.location.longitude;
+        var x2 = tree.get('point','lat');
+        var y2 = tree.get('point','lng');;
+        return d = Math.sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) );
+      })
+
+      // if(response.data.length < 14) tree.select('distance').apply(function(distance){console.log(distance); return distance - 500 })
       $('#instagramFeed').html(templates.instagramFeed( response ));
-    });
+    }
+
+    $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
   })
 }
 
 // user events
 $( 'body' ).keypress(function( event ) {
+    console.log(event.which)
   if ( event.which == 106 ) { tree.select('pointId').apply(next);}
   if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
   if ( event.which == 115 ) {
@@ -167,7 +207,7 @@ function getMarkers(pts, map){
       return new google.maps.Marker({
         map: map,
         position: p,
-        icon: 'assets/images/beachflag.png'
+        icon: 'assets/images/wifi.png'
       });
     }).value()
 }
