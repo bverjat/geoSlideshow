@@ -1,15 +1,21 @@
+'use strict';
+
 function initialize() {
   $.getJSON( 'data/data.json', function(data) {
 
     // STATE AND TREE //////////////////////////////////////////////////////////
     var templates = getTemplates();
     var monkey = Baobab.monkey;
-    var tree = new Baobab({
+
+    var storageKey = 'NOF';
+    var storageData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+    var state = {
 
       points:getPoints(data.features),
       pointId:0,
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
-        return points[id % points.length] || null;
+        return points[id] || null;
       }),
       distance: 2000,
       heading: 50,
@@ -24,14 +30,21 @@ function initialize() {
 
       targetMarker:{}
 
-    },{lazyMonkeys:false});
+    };
 
+
+    var tree = new Baobab(_.merge({},storageData,state),{lazyMonkeys:false});
     window.tree = tree;
 
-    var point = tree.select('point');
-        point.on('update', function(e){
+    console.log(storageData, tree.get());
 
-          var point = e.data.currentData;
+
+    var points = tree.select('points')
+        points.on('update', updateStorage)
+    var pointId = tree.select('pointId');
+        pointId.on('update', function(e){
+
+          var point = tree.get('point');
           console.log(point);
 
           sv.getPanorama({location:point, radius: 1000}, processSVData);
@@ -47,7 +60,7 @@ function initialize() {
     var distance = tree.select('distance');
         distance.on('update', function(e){
           updateInstagram();
-          $('#currentDistance, #slideDistance').val(e.data.currentData);
+          $('#currentDistance, #slideDistance').val(distance.get());
         })
 
     var pitchSpeed = tree.select('pitchSpeed');
@@ -56,9 +69,7 @@ function initialize() {
 
     // INIT ////////////////////////////////////////////////////////////////////
 
-    tree.set('pointId',_.random(0,tree.get('points').length))
-    tree.set('distance', 1000);
-    setInterval(pitchAnimate,10);
+    var pitchAnim = setInterval(pitchAnimate,10);
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
@@ -86,6 +97,9 @@ function initialize() {
     // marker indexation
     var targetMarkerIndex = getMarkers(tree.get('points'), map);
 
+    tree.select('pointId').emit('update');
+    distance.emit('update');
+
     // MAP UTILS ///////////////////////////////////////////////////////////////
 
     function updatePanoramaPov(){
@@ -106,13 +120,14 @@ function initialize() {
     function processSVData(data, status) {
 
       if (!_.isNull(data)) {
+
+        clearInterval(pitchAnim);
+
         var viewpointMarker = new google.maps.Marker({ map: map, position: data.location.latLng });
-        var targetMarker = targetMarkerIndex[point.get('id')];
+        var targetMarker = targetMarkerIndex[tree.get('pointId')];
 
         // update panorama
         tree.set('heading',google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition()))
-        console.log(tree.get('pitchCenter'));
-
         tree.set('pitch', tree.get('pitchCenter'))
         pitchSpeed.apply(abs);
 
@@ -129,6 +144,8 @@ function initialize() {
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
 
+        pitchAnim = setInterval(pitchAnimate,10);
+
       }else{
         panorama.setVisible(false);
       }
@@ -142,7 +159,7 @@ function initialize() {
       });
     }
 
-    function onInstagramDidLoad(event, response){
+    function onInstagramDidLoad(event, response, req){
       // sort by distance from current point
       response.data = _.sortBy(response.data, function(d){
         var x1 = d.location.latitude;
@@ -153,15 +170,17 @@ function initialize() {
         return d
       })
 
-
-
-      // if(response.data.length < 14) tree.select('distance').apply(function(distance){console.log(distance); return distance - 500 })
+      tree.set(['points', function(p){ return p.id === tree.get('pointId')},'activity'],averAge(response.data));
       $('#instagramFeed').html(templates.instagramFeed( response ));
+    }
+    function updateStorage(){
+      localStorage.setItem(storageKey,JSON.stringify(tree.serialize()))
     }
   })
 }
 
-// UTILS
+// UTILS  //////////////////////////////////////////////////////////////////////
+// load templates from dom
 function getTemplates(){
   var t = [];
   $('script[type*=handlebars-template]').each(function(){
@@ -170,6 +189,13 @@ function getTemplates(){
   return t;
 }
 
+// get instagram result average age
+function averAge(data){
+  var age = _.sum(data, function(d){ return d.created_time }) / data.length ;
+  return Math.floor( Date.now()/1000 - age );
+}
+
+// filter and format geojson points
 function getPoints(data){
   return _(data)
     .filter(function(p){
@@ -187,22 +213,23 @@ function getPoints(data){
         lat: p.geometry.coordinates[1],
         lng: p.geometry.coordinates[0],
         name: p.properties.name,
-        description: p.properties.description
+        description: p.properties.description,
+        activity:0
       }
     })
     .value();
 }
 
-function round(value, decimals) {
-  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
-}
-
+// create new markers from point array
 function getMarkers(pts, map){
  return _(pts).indexBy('id').map(function(p){
     return new google.maps.Marker({ map: map, position: p, icon: 'assets/images/wifi.png'});
   }).value()
 }
 
+
+
+var round = function(nb, prec) {return Number(Math.round(nb+'e'+prec)+'e-'+prec)}
 var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
 var negate = function(nb) { return -nb; };

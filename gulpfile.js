@@ -10,7 +10,8 @@ var jsFiles = [
   './bower_components/lodash/lodash.js',
   './bower_components/handlebars/handlebars.min.js',
   './bower_components/baobab/build/baobab.js',
-  './bower_components/jquery-instagram/dist/instagram.js'
+  './bower_components/jquery-instagram/dist/instagram.js',
+  './bower_components/d3/d3.js'
   ];
 
 gulp.task('less', function() {
