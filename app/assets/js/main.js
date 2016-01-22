@@ -11,7 +11,6 @@ function initialize() {
     var storageData = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
     var state = {
-
       points:getPoints(data.features),
       pointId:0,
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
@@ -33,14 +32,15 @@ function initialize() {
     };
 
 
-    var tree = new Baobab(_.merge({},storageData,state),{lazyMonkeys:false});
+    var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
     window.tree = tree;
 
     console.log(storageData, tree.get());
 
 
     var points = tree.select('points')
-        points.on('update', updateStorage)
+        points.on('update', updateStorage);
+
     var pointId = tree.select('pointId');
         pointId.on('update', function(e){
 
@@ -143,6 +143,7 @@ function initialize() {
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
+        map.setZoom(map.getZoom() - 1);
 
         pitchAnim = setInterval(pitchAnimate,10);
 
@@ -170,14 +171,47 @@ function initialize() {
         return d
       })
 
-      tree.set(['points', function(p){ return p.id === tree.get('pointId')},'activity'],averAge(response.data));
+      tree.set(['points', function(p){
+        return p.id === tree.get('pointId')
+      },'activity'], averAge(response.data));
+
       $('#instagramFeed').html(templates.instagramFeed( response ));
     }
+
     function updateStorage(){
+      console.log('updateStorage')
       localStorage.setItem(storageKey,JSON.stringify(tree.serialize()))
     }
-  })
-}
+
+
+    // TIMELINE VIZ
+
+    var w = $('#pathway').width() , h = $('#pathway').height(),
+    svg = d3.select('#pathway').append('svg:svg').attr('width', w).attr('height', h);
+
+    console.log(
+      _.max(tree.get('points'), function(d){
+        return d.activity;
+      }).activity
+
+    )
+
+    var activityLines = svg.selectAll('.activityLines')
+      .data(tree.get('points')).enter()
+      .append('line')
+      .attr('class','activityLines')
+      .attr({
+        x1:function(d){return d.id},
+        y1:0,
+        x2:function(d){return d.id},
+        y2:100
+      })
+      .style('stroke', 'red');
+
+      ;
+
+  }) // load
+} // end initialize
 
 // UTILS  //////////////////////////////////////////////////////////////////////
 // load templates from dom

@@ -6730,12 +6730,16 @@ body {
   overflow: hidden;
 }
 #instagramFeed {
-  height: 300px;
+  height: 150px;
   overflow-y: scroll;
 }
 #map,
 #pano {
   height: 30%;
+}
+#pathway {
+  height: 20%;
+  background-color: gold;
 }
 #currentId {
   width: 100%;
