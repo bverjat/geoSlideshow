@@ -3,6 +3,7 @@ function initialize() {
 
     // STATE AND TREE //////////////////////////////////////////////////////////
     var templates = getTemplates();
+    var monkey = Baobab.monkey;
     var tree = new Baobab({
 
       points:getPoints(data.features),
@@ -12,7 +13,15 @@ function initialize() {
       }),
       distance: 2000,
       heading: 50,
+
       pitch: 50,
+      pitchSpeed: 0.05,
+      pitchMax: 40,
+      pitchMin: -20,
+      pitchCenter:monkey({ cursors: { max: ['pitchMax'], min: ['pitchMin']},
+        get: function(data) { return (data.max + data.min)/2 }
+      }),
+
       targetMarker:{}
 
     },{lazyMonkeys:false});
@@ -41,6 +50,7 @@ function initialize() {
           $('#currentDistance, #slideDistance').val(e.data.currentData);
         })
 
+    var pitchSpeed = tree.select('pitchSpeed');
     tree.select('pitch').on('update', updatePanoramaPov);
     tree.select('heading').on('update', updatePanoramaPov);
 
@@ -48,8 +58,7 @@ function initialize() {
 
     tree.set('pointId',_.random(0,tree.get('points').length))
     tree.set('distance', 1000);
-    setInterval(function(){ tree.select('pitch').apply(pitchTilt); },50)
-
+    setInterval(pitchAnimate,10);
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
@@ -84,9 +93,14 @@ function initialize() {
       map.setStreetView(panorama);
     }
 
-    function pitchTilt(pitch){
-      var dir = (pitch > 60) ? -1 : 1;
-      return pitch + (dir* 0.05)
+    function pitchAnimate(){
+      var pitch = tree.get('pitch');
+
+      if(pitch > tree.get('pitchMax') || pitch < tree.get('pitchMin') ){
+       pitchSpeed.apply(negate);
+      }
+
+      tree.set('pitch', pitch + pitchSpeed.get() );
     }
 
     function processSVData(data, status) {
@@ -97,7 +111,12 @@ function initialize() {
 
         // update panorama
         tree.set('heading',google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition()))
-        tree.set('pitch',-20)
+        console.log(tree.get('pitchCenter'));
+
+        tree.set('pitch', tree.get('pitchCenter'))
+        pitchSpeed.apply(abs);
+
+
         panorama.setPano(data.location.pano);
         panorama.setVisible(true);
 
@@ -111,9 +130,7 @@ function initialize() {
         map.fitBounds(bounds);
 
       }else{
-        tree.set('pitch',90)
         panorama.setVisible(false);
-
       }
     }
 
@@ -136,12 +153,15 @@ function initialize() {
         return d
       })
 
+
+
       // if(response.data.length < 14) tree.select('distance').apply(function(distance){console.log(distance); return distance - 500 })
       $('#instagramFeed').html(templates.instagramFeed( response ));
     }
   })
 }
 
+// UTILS
 function getTemplates(){
   var t = [];
   $('script[type*=handlebars-template]').each(function(){
@@ -185,6 +205,9 @@ function getMarkers(pts, map){
 
 var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
+var negate = function(nb) { return -nb; };
+var abs = function(nb) { return Math.abs(nb); };
+
 
 Handlebars.registerHelper('debug', function(optionalValue) {
   console.log('Current Context');
