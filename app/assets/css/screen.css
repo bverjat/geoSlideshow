@@ -6735,10 +6735,11 @@ body {
 }
 #map,
 #pano {
-  height: 30%;
+  height: calc(((100% - 200px)/100) * 40 );
+  width: 100%;
 }
 #pathway {
-  height: 20%;
+  height: calc(((100% - 200px)/100) * 20 );
   background-color: royalblue;
 }
 #currentId {
@@ -6746,10 +6747,10 @@ body {
   text-align: center;
 }
 #controls {
-  background-color: black;
   padding-bottom: 0.5em;
   padding-top: 0.5em;
   font-size: 0.5em;
+  height: 50px;
 }
 .hide {
   display: none;
@@ -6763,6 +6764,12 @@ h5 {
 #activity .col {
   height: 100%;
   overflow-y: scroll;
+}
+.graticule {
+  fill: none;
+  stroke: white;
+  stroke-width: .5px;
+  stroke-opacity: .5;
 }
 .gm-iv-address {
   display: none !important;

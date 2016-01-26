@@ -7,29 +7,34 @@ html, body {
 }
 
 #instagramFeed {
-  // height: 150px*2;
   height: 150px;
   overflow-y: scroll;
 }
 
-#map, #pano { height: 30%; }
+#map, #pano {
+  height: calc(~"((100% - 200px)/100) * 40 ");
+  width: 100%;
+}
 
-#pathway {
-  height: 20%;
+#pathway{
+
+  height: calc(~"((100% - 200px)/100) * 20 ");
+
   background-color: royalblue;
 }
+
+
 #currentId {
   width: 100%;
   text-align: center;
 }
 
 #controls {
-  background-color: black;
+  // background-color: black;
   padding-bottom: 0.5em;
   padding-top: 0.5em;
   font-size: 0.5em;
-
-  // height: 150px;
+  height: 50px;
 }
 
 .hide { display: none; }
@@ -44,6 +49,13 @@ h5 {
     height: 100%;
     overflow-y: scroll;
   }
+}
+
+.graticule {
+  fill: none;
+  stroke: white;
+  stroke-width: .5px;
+  stroke-opacity: .5;
 }
 
 

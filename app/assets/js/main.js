@@ -191,13 +191,19 @@ function initialize() {
         .scale(width/2)
         .translate([width / 2, height / 2])
         .clipAngle(90)
-        .precision(0.5)
+        // .precision(0.5)
 
     var path = d3.geo.path().projection(projection);
     var worldPath = svg.append("path");
     var pointsCircle = svg.selectAll('.pointsCircle')
         .data(tree.get('points')).enter().append('circle');
 
+    var graticule = d3.geo.graticule();
+
+    svg.append("path")
+        .datum(graticule)
+        .attr("class", "graticule")
+        .attr("d", path);
 
     function transition() {
       d3.transition()

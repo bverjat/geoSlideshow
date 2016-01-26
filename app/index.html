@@ -6,20 +6,21 @@
     <link rel="stylesheet" type="text/css" href="assets/css/screen.css">
   </head>
   <body>
-    <div class="instagram"></div>
 
-    <div id="instagramFeed"></div>
-    <div id="pano" class="col-xs-12"></div>
-    <div id="map"  class="col-xs-12"></div>
-    <div id="pathway" class="col-xs-12" ></div>
 
-    <div id="controls" class="col-xs-12">
-      <div class="col-xs-2"><input  id="currentId" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
-      <div class="col-xs-6"><input id="slideId" class="form-control" type="range" min="0" max="500" step="1" /></div>
-      <div class="col-xs-2"><input  id="currentDistance" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
-      <div class="col-xs-2"><input id="slideDistance" class="form-control" type="range"  min="100" max="5000" step="50" /></div>
+    <div id="controls">
+      <div class="col-xs-1"><input  id="currentId" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
+      <div class="col-xs-4"><input id="slideId" class="form-control" type="range" min="0" max="500" step="1" /></div>
+<!--       <div class="col-xs-2"><input  id="currentDistance" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
+      <div class="col-xs-2"><input id="slideDistance" class="form-control" type="range"  min="100" max="5000" step="50" /></div> -->
+      <div id="pointInfo"></div>
     </div>
-    <div class="col-xs-12" id="pointInfo"></div>
+    <div id="pathway"></div>
+    <div id="map"></div>
+    <div id="pano"></div>
+    <div id="instagramFeed"></div>
+
+    <div class="instagram"></div>
 
     <script id="activity" type="text/x-handlebars-template">
       <div class="col col-xs-2"><h5>hashtags : {{#each point.hashtags}} {{this}} {{/each}}</h5></div>
@@ -43,8 +44,14 @@
     </script>
 
     <script id="pointInfo" type="text/x-handlebars-template">
-      <h5><input type="text" value="{{point.lat}},{{point.lng}}"/> {{point.name}}</h5>
-      <p>{{{point.description}}}</p>
+      <div class="col-xs-2">
+        <input type="text" class="form-control" value="{{point.lat}},{{point.lng}}"/>
+      </div>
+      <div class="col-xs-4">
+        <h5>{{point.name}}</h5>
+        <p>{{{point.description}}}</p>
+      </div>
+
     </script>
 
     <script id="instagramFeed" type="text/x-handlebars-template">
