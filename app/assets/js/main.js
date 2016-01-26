@@ -1,7 +1,7 @@
 'use strict';
 
 function initialize() {
-  $.getJSON( 'data/data.json', function(data) {
+  $.getJSON( 'data/refined.json', function(data) {
 
     // STATE AND TREE //////////////////////////////////////////////////////////
     var templates = getTemplates();
@@ -31,12 +31,10 @@ function initialize() {
 
     };
 
-
     var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
     window.tree = tree;
 
     console.log(storageData, tree.get());
-
 
     var points = tree.select('points')
         points.on('update', updateStorage);
@@ -47,7 +45,7 @@ function initialize() {
           var point = tree.get('point');
           console.log(point);
 
-          sv.getPanorama({location:point, radius: 1000}, processSVData);
+          sv.getPanorama({location:point, radius: tree.get('distance')}, processSVData);
           map.setCenter(point);
 
           $('#activity').html(templates.activity( tree.get() ));
@@ -55,6 +53,7 @@ function initialize() {
           $('#currentId, #slideId').val(tree.get('pointId'));
 
           updateInstagram()
+          transition()
         })
 
     var distance = tree.select('distance');
@@ -129,8 +128,8 @@ function initialize() {
         // update panorama
         tree.set('heading',google.maps.geometry.spherical.computeHeading(viewpointMarker.getPosition(), targetMarker.getPosition()))
         tree.set('pitch', tree.get('pitchCenter'))
-        pitchSpeed.apply(abs);
 
+        pitchSpeed.apply(abs);
 
         panorama.setPano(data.location.pano);
         panorama.setVisible(true);
@@ -143,7 +142,8 @@ function initialize() {
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
-        map.setZoom(map.getZoom() - 1);
+
+        // map.setZoom(map.getZoom() - 1);
 
         pitchAnim = setInterval(pitchAnimate,10);
 
@@ -163,12 +163,9 @@ function initialize() {
     function onInstagramDidLoad(event, response, req){
       // sort by distance from current point
       response.data = _.sortBy(response.data, function(d){
-        var x1 = d.location.latitude;
-        var y1 = d.location.longitude;
-        var x2 = tree.get('point','lat');
-        var y2 = tree.get('point','lng');;
-        var d = Math.sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) );
-        return d
+        var p1 = [d.location.latitude, d.location.longitude];
+        var p2 = [tree.get('point','lat'), tree.get('point','lng')];
+        return distanceBetweenPoints(p1,p2);
       })
 
       tree.set(['points', function(p){
@@ -186,30 +183,58 @@ function initialize() {
 
     // TIMELINE VIZ
 
-    var w = $('#pathway').width() , h = $('#pathway').height(),
-    svg = d3.select('#pathway').append('svg:svg').attr('width', w).attr('height', h);
 
-    console.log(
-      _.max(tree.get('points'), function(d){
-        return d.activity;
-      }).activity
+    var width = $('#pathway').width(), height = $('#pathway').height(),
+    svg = d3.select('#pathway').append('svg:svg').attr('width', width).attr('height', height);
 
-    )
+    var projection = d3.geo.orthographic()
+        .scale(width/2)
+        .translate([width / 2, height / 2])
+        .clipAngle(90)
+        .precision(0.5)
 
-    var activityLines = svg.selectAll('.activityLines')
-      .data(tree.get('points')).enter()
-      .append('line')
-      .attr('class','activityLines')
-      .attr({
-        x1:function(d){return d.id},
-        y1:0,
-        x2:function(d){return d.id},
-        y2:100
-      })
-      .style('stroke', 'red');
+    var path = d3.geo.path().projection(projection);
+    var worldPath = svg.append("path");
+    var pointsCircle = svg.selectAll('.pointsCircle')
+        .data(tree.get('points')).enter().append('circle');
 
-      ;
 
+    function transition() {
+      d3.transition()
+          .duration(1250)
+          .tween("rotate", function() {
+            var p = [tree.get('point').lng, tree.get('point').lat],
+                r = d3.interpolate(projection.rotate(), [-p[0], -p[1]]);
+
+            return function(t) {
+              projection.rotate(r(t));
+              refreshPosition();
+            };
+          })
+    }
+
+    function refreshPosition(){
+      svg.selectAll("path").attr("d", path);
+      pointsCircle
+        .attr('cx', function(d){ return projection([d.lng,d.lat])[0]})
+        .attr('cy', function(d){ return projection([d.lng,d.lat])[1]})
+        .transition()
+        .attr('r', function(d){ return d.id === tree.get('pointId') ? 10 : 1  })
+    }
+
+    d3.json("/assets/images/world-110m.json", function(error, world) {
+      if (error) throw error;
+
+      worldPath
+          .datum(topojson.feature(world, world.objects.land))
+          .attr("class", "land")
+          .attr("d", path)
+          .style('fill','white')
+          ;
+
+      pointsCircle.attr('r', 2).style('fill', 'red');
+
+    });
   }) // load
 } // end initialize
 
@@ -251,8 +276,13 @@ function getPoints(data){
         activity:0
       }
     })
-    .value();
+    .value()
 }
+
+function distanceBetweenPoints(p1, p2) {
+  return Math.abs(Math.sqrt((p1[0] - p2[0]) * (p1[0] - p2[0]) + (p1[1] - p2[1]) * (p1[1] - p2[1])));
+}
+
 
 // create new markers from point array
 function getMarkers(pts, map){
@@ -261,14 +291,11 @@ function getMarkers(pts, map){
   }).value()
 }
 
-
-
 var round = function(nb, prec) {return Number(Math.round(nb+'e'+prec)+'e-'+prec)}
 var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
 var negate = function(nb) { return -nb; };
 var abs = function(nb) { return Math.abs(nb); };
-
 
 Handlebars.registerHelper('debug', function(optionalValue) {
   console.log('Current Context');
