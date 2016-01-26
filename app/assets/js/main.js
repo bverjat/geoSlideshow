@@ -96,7 +96,8 @@ function initialize() {
     // marker indexation
     var targetMarkerIndex = getMarkers(tree.get('points'), map);
 
-    tree.select('pointId').emit('update');
+    // tree.select('pointId').emit('update');
+    tree.set('pointId', tree.get('points').length/2);
     distance.emit('update');
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
