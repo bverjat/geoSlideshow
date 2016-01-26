@@ -228,7 +228,7 @@ function initialize() {
         .attr('r', function(d){ return d.id === tree.get('pointId') ? 10 : 1  })
     }
 
-    d3.json("/assets/images/world-110m.json", function(error, world) {
+    d3.json("assets/images/world-110m.json", function(error, world) {
       if (error) throw error;
 
       worldPath
@@ -293,7 +293,7 @@ function distanceBetweenPoints(p1, p2) {
 // create new markers from point array
 function getMarkers(pts, map){
  return _(pts).indexBy('id').map(function(p){
-    return new google.maps.Marker({ map: map, position: p, icon: 'assets/images/wifi.png'});
+    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/wifi.png'});
   }).value()
 }
 
