@@ -8,7 +8,7 @@ function initialize() {
     var monkey = Baobab.monkey;
 
     var storageKey = 'NOF';
-    var storageData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    var storageData = {}// JSON.parse(localStorage.getItem(storageKey) || '{}');
 
     var state = {
       points:getPoints(data.features),
@@ -270,6 +270,9 @@ function getPoints(data){
     .uniq(function(p){
       // remove to close points
       return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
+    })
+    .sortBy(function(p){
+      return p.geometry.coordinates[0]
     })
     .map(function(p , i){
       // get clean object from geojson
