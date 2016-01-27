@@ -16,7 +16,7 @@ function initialize() {
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
         return points[id] || null;
       }),
-      distance: 2000,
+      distance: 3000,
       heading: 50,
 
       pitch: 50,
@@ -68,7 +68,7 @@ function initialize() {
 
     // INIT ////////////////////////////////////////////////////////////////////
 
-    var pitchAnim = setInterval(pitchAnimate,10);
+    var pitchAnim = setInterval(pitchAnimate,50);
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
@@ -78,12 +78,22 @@ function initialize() {
 
     // key actions
     $( 'body' ).keypress(function( event ) {
+      console.log(event.which);
       if ( event.which == 106 ) { tree.select('pointId').apply(next);}
       else if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
     });
 
     // instagram feed listenner
     $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
+
+    var loop = setInterval(nextFrame, 10000);
+    function nextFrame(){
+      if($('#instagramFeed img').length > 6){
+        for (var i = 6 - 1; i >= 0; i--) {
+          $('#instagramFeed img:last').after($('#instagramFeed img:first'));
+        };
+      }
+    }
 
     // maps and panorama objects
     var map = new google.maps.Map(document.getElementById('map'), {
@@ -297,7 +307,7 @@ function distanceBetweenPoints(p1, p2) {
 // create new markers from point array
 function getMarkers(pts, map){
  return _(pts).indexBy('id').map(function(p){
-    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/wifi.png'});
+    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/point.svg'});
   }).value()
 }
 

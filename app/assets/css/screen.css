@@ -6727,7 +6727,7 @@ button.close {
 html,
 body {
   height: 100%;
-  overflow: hidden;
+  background-color: royalblue;
 }
 #instagramFeed {
   height: 150px;
@@ -6751,6 +6751,7 @@ body {
   padding-top: 0.5em;
   font-size: 0.5em;
   height: 50px;
+  color: white;
 }
 .hide {
   display: none;
