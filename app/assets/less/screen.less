@@ -3,29 +3,36 @@
 
 html, body {
   height: 100%;
-  // overflow: hidden;
+  overflow: hidden;
   // background-color: black
-    background-color: royalblue;
+    background-color: black;
+
 }
 
 #instagramFeed {
   height: 150px;
   overflow-y: scroll;
+  .grayscale();
 }
 
-#map, #pano {
-  height: calc(~"((100% - 200px)/100) * 40 ");
-  width: 100%;
-
+#map, #pano, #pathway, #tonerMap{
+    width: 100%;
 }
+#tonerMap, #world { height: calc(~"((100% - 150px)/100) * 15 ")}
+#map  { height: calc(~"((100% - 150px)/100) * 40 ");.grayscale();}
+#pano { height: calc(~"((100% - 150px)/100) * 45 ");.grayscale();}
 
-#pathway{
-
-  height: calc(~"((100% - 200px)/100) * 20 ");
-
-  background-color: royalblue;
+#world {
+  width: 33%;
+  position: absolute;
+  top:0;
+  left:0;
+  // display: none;
 }
-
+#tonerMap {
+  width: 77%;
+  margin-left: 33%;
+}
 
 #currentId {
   width: 100%;
@@ -33,12 +40,18 @@ html, body {
 }
 
 #controls {
-  // background-color: black;
-  padding-bottom: 0.5em;
   padding-top: 0.5em;
-  font-size: 0.5em;
-  height: 50px;
-  color: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+
+  .title {
+    background-color: black;
+    color: white;
+
+    border-radius: 4px;
+  }
 }
 
 .hide { display: none; }
@@ -62,8 +75,6 @@ h5 {
   stroke-opacity: .5;
 }
 
-
-
 // panorama adress
 .gm-iv-address { display: none !important;}
 .gm-iv-address-link, .gm-iv-horizontal-separator, .gm-iv-marker, .gm-iv-vertical-separator {
@@ -73,6 +84,17 @@ h5 {
 // controls
 .gmnoprint, .gm-style-cc { display: none !important;}
 
-// logos
+// // logos
 img[src*="images/sv4"] { display: none !important; }
 img[src*="white4"], img[src*="images/google4"]{ display: none !important;}
+
+
+.grayscale {
+  // -webkit-filter: grayscale(100%);
+  // -moz-filter: grayscale(100%);
+  // -ms-filter: grayscale(100%);
+  // -o-filter: grayscale(100%);
+  // filter: grayscale(100%);
+  // filter: url(grayscale.svg); /* Firefox 4+ */
+  // filter: gray; /* IE 6-9 */
+}

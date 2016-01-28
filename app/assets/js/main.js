@@ -21,14 +21,15 @@ function initialize() {
 
       pitch: 50,
       pitchSpeed: 0.05,
+      pitchInterval: 100,
       pitchMax: 40,
       pitchMin: -20,
       pitchCenter:monkey({ cursors: { max: ['pitchMax'], min: ['pitchMin']},
         get: function(data) { return (data.max + data.min)/2 }
       }),
 
+      controls:null,
       targetMarker:{}
-
     };
 
     var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
@@ -39,22 +40,10 @@ function initialize() {
     var points = tree.select('points')
         points.on('update', updateStorage);
 
+
+
     var pointId = tree.select('pointId');
-        pointId.on('update', function(e){
-
-          var point = tree.get('point');
-          console.log(point);
-
-          sv.getPanorama({location:point, radius: tree.get('distance')}, processSVData);
-          map.setCenter(point);
-
-          $('#activity').html(templates.activity( tree.get() ));
-          $('#pointInfo').html(templates.pointInfo( tree.get() ));
-          $('#currentId, #slideId').val(tree.get('pointId'));
-
-          updateInstagram()
-          transition()
-        })
+        pointId.on('update', onPointIdUpdate)
 
     var distance = tree.select('distance');
         distance.on('update', function(e){
@@ -65,28 +54,49 @@ function initialize() {
     var pitchSpeed = tree.select('pitchSpeed');
     tree.select('pitch').on('update', updatePanoramaPov);
     tree.select('heading').on('update', updatePanoramaPov);
+    tree.select('controls').on('update', function(e){
+        tree.get('controls') ? $("#controls").show() : $("#controls").hide()
+     });
+
+
+    //
+
+    function onPointIdUpdate(e) {
+      var point = tree.get('point');
+      console.log(point);
+
+      sv.getPanorama({location:point, radius: tree.get('distance')}, processSVData);
+      map.setCenter(point);
+
+      $('#activity').html(templates.activity( tree.get() ));
+      $('#pointInfo').html(templates.pointInfo( tree.get() ));
+      $('#currentId, #slideId').val(tree.get('pointId'));
+
+      updateInstagram()
+      transition()
+    }
 
     // INIT ////////////////////////////////////////////////////////////////////
 
-    var pitchAnim = setInterval(pitchAnimate,50);
+    var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
     $( '#currentId, #slideId' ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
     $( '#currentDistance, #slideDistance' ).change(function() { tree.set('distance', parseInt( $( this ).val() ) );});
 
-
     // key actions
     $( 'body' ).keypress(function( event ) {
-      console.log(event.which);
       if ( event.which == 106 ) { tree.select('pointId').apply(next);}
       else if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
+      else if ( event.which == 99 ) { tree.select('controls').apply(toogle);}
     });
 
     // instagram feed listenner
     $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
 
     var loop = setInterval(nextFrame, 10000);
+
     function nextFrame(){
       if($('#instagramFeed img').length > 6){
         for (var i = 6 - 1; i >= 0; i--) {
@@ -96,25 +106,83 @@ function initialize() {
     }
 
     // maps and panorama objects
+
+    // var mapOptions = {};
+    // var tonerMap = L.map('tonerMap', mapOptions).setView([51.505, -0.09], 17);
+
+    // var layerOptions = {
+    //   attribution : 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    //   tilePath : 'http://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
+    //   minZoom:1,
+    // }
+
+    // L.tileLayer(layerOptions.tilePath, layerOptions).addTo(tonerMap);
+
+
+    var tonerMap = new google.maps.Map(document.getElementById('tonerMap'), {
+      center: tree.get('points')[0],
+      zoom: 10, streetViewControl: true, mapTypeId: google.maps.MapTypeId.TERRAIN
+    });
+
+    // var moonMapType = new google.maps.ImageMapType({
+    //       "getTileUrl": function(coord, zoom) {
+
+    //           var subdomains ="a b c d".split(" ");
+    //           var server = "http://stamen-tiles-{S}.tile.stamen.com/toner/{Z}/{X}/{Y}..png";
+
+    //           var numTiles = 1 << zoom,
+    //               wx = coord.x % numTiles,
+    //               x = (wx < 0) ? wx + numTiles : wx,
+    //               y = coord.y,
+    //               index = (zoom + x + y) % subdomains.length;
+    //           return server
+    //               .replace("{S}", subdomains[index])
+    //               .replace("{Z}", zoom)
+    //               .replace("{X}", x)
+    //               .replace("{Y}", y);
+    //       },
+    //       "tileSize": new google.maps.Size(256, 256),
+    //       "name":     'moon',
+    //       "minZoom":  0,
+    //       "maxZoom":  17
+    // });
+
+    // tonerMap.mapTypes.set('moon', moonMapType);
+
+
     var map = new google.maps.Map(document.getElementById('map'), {
       center: tree.get('points')[0],
       zoom: 17, streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
     });
+
     var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
     var sv = new google.maps.StreetViewService();
 
     // marker indexation
     var targetMarkerIndex = getMarkers(tree.get('points'), map);
 
-    // tree.select('pointId').emit('update');
     tree.set('pointId', tree.get('points').length/2);
+    tree.set('controls', false);
     distance.emit('update');
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
 
+
+    function autoRotate() {
+      if (map.getTilt() !== 0) {
+        var heading = map.getHeading() || 0;
+        map.setHeading(heading + 90);
+      }
+    }
+
+    setInterval(autoRotate, 7000);
+
+
     function updatePanoramaPov(){
       panorama.setPov({heading:tree.get('heading'), pitch: tree.get('pitch') });
       map.setStreetView(panorama);
+      tonerMap.setStreetView(panorama);
+
     }
 
     function pitchAnimate(){
@@ -153,10 +221,20 @@ function initialize() {
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
+        tonerMap.fitBounds(bounds);
+
+
+        var line = new google.maps.Polyline({
+            path: [viewpointMarker.getPosition(), targetMarker.getPosition()],
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 1 * map.getZoom()/10 ,
+            map: map
+        });
 
         // map.setZoom(map.getZoom() - 1);
 
-        pitchAnim = setInterval(pitchAnimate,10);
+        pitchAnim = setInterval(pitchAnimate,tree.get('pitchInterval'));
 
       }else{
         panorama.setVisible(false);
@@ -172,6 +250,7 @@ function initialize() {
     }
 
     function onInstagramDidLoad(event, response, req){
+
       // sort by distance from current point
       response.data = _.sortBy(response.data, function(d){
         var p1 = [d.location.latitude, d.location.longitude];
@@ -195,11 +274,11 @@ function initialize() {
     // TIMELINE VIZ
 
 
-    var width = $('#pathway').width(), height = $('#pathway').height(),
-    svg = d3.select('#pathway').append('svg:svg').attr('width', width).attr('height', height);
+    var width = $('#world').width(), height = $('#world').height(),
+    svg = d3.select('#world').append('svg:svg').attr('width', width).attr('height', height);
 
     var projection = d3.geo.orthographic()
-        .scale(width/2)
+        .scale(width/2.5)
         .translate([width / 2, height / 2])
         .clipAngle(90)
         // .precision(0.5)
@@ -307,7 +386,7 @@ function distanceBetweenPoints(p1, p2) {
 // create new markers from point array
 function getMarkers(pts, map){
  return _(pts).indexBy('id').map(function(p){
-    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/point.svg'});
+    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/none.svg'});
   }).value()
 }
 
@@ -316,6 +395,7 @@ var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
 var negate = function(nb) { return -nb; };
 var abs = function(nb) { return Math.abs(nb); };
+var toogle = function(boolean) { return !boolean; };
 
 Handlebars.registerHelper('debug', function(optionalValue) {
   console.log('Current Context');

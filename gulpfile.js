@@ -12,7 +12,8 @@ var jsFiles = [
   './bower_components/baobab/build/baobab.js',
   './bower_components/jquery-instagram/dist/instagram.js',
   './bower_components/d3/d3.js',
-  './bower_components/topojson/topojson.js'
+  './bower_components/topojson/topojson.js',
+  './bower_components/leaflet/dist/leaflet.js'
   ];
 
 gulp.task('less', function() {

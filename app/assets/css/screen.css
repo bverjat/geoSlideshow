@@ -6727,31 +6727,54 @@ button.close {
 html,
 body {
   height: 100%;
-  background-color: royalblue;
+  overflow: hidden;
+  background-color: black;
 }
 #instagramFeed {
   height: 150px;
   overflow-y: scroll;
 }
 #map,
-#pano {
-  height: calc(((100% - 200px)/100) * 40 );
+#pano,
+#pathway,
+#tonerMap {
   width: 100%;
 }
-#pathway {
-  height: calc(((100% - 200px)/100) * 20 );
-  background-color: royalblue;
+#tonerMap,
+#world {
+  height: calc(((100% - 150px)/100) * 15 );
+}
+#map {
+  height: calc(((100% - 150px)/100) * 40 );
+}
+#pano {
+  height: calc(((100% - 150px)/100) * 45 );
+}
+#world {
+  width: 33%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#tonerMap {
+  width: 77%;
+  margin-left: 33%;
 }
 #currentId {
   width: 100%;
   text-align: center;
 }
 #controls {
-  padding-bottom: 0.5em;
   padding-top: 0.5em;
-  font-size: 0.5em;
-  height: 50px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+#controls .title {
+  background-color: black;
   color: white;
+  border-radius: 4px;
 }
 .hide {
   display: none;
