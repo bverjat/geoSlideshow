@@ -6732,7 +6732,6 @@ body {
 }
 #instagramFeed {
   height: 150px;
-  overflow-y: scroll;
 }
 #map,
 #pano,
@@ -6788,7 +6787,6 @@ h5 {
 }
 #activity .col {
   height: 100%;
-  overflow-y: scroll;
 }
 #world .graticule {
   fill: none;
