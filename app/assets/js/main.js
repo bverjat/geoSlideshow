@@ -28,7 +28,9 @@ function initialize() {
 
       rotateInterval: 6000,
       controls:null,
-      targetMarker:{}
+      targetMarker:{},
+
+      autoVisitTimer:60*1000
     };
 
     var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
@@ -63,21 +65,25 @@ function initialize() {
       var point = tree.get('point');
       console.log(point);
 
-      sv.getPanorama({location:point, radius: tree.get('distance')}, onPanorama);
+      streetViewService.getPanorama({location:point, radius: tree.get('distance')}, onPanorama);
       map.setCenter(point);
 
       $('#activity').html(templates.activity( tree.get() ));
       $('#pointInfo').html(templates.pointInfo( tree.get() ));
       $('#currentId, #slideId').val(tree.get('pointId'));
 
-      updateInstagram()
-      transition()
+      updateInstagram();
+      transition();
     }
 
     // INIT ////////////////////////////////////////////////////////////////////
 
     var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
     var rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
+    var autoVisit = setInterval(function(){tree.select('pointId').apply(next)},tree.get('autoVisitTimer'));
+
+    var searchZoneCircle = new google.maps.Circle();
+    var picMarkers = [];
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
@@ -86,6 +92,10 @@ function initialize() {
 
     // key actions
     $( 'body' ).keypress(function( event ) {
+
+      clearInterval(autoVisit);
+      autoVisit = setInterval(function(){tree.select('pointId').apply(next)}, tree.get('autoVisitTimer'));
+
       if ( event.which == 106 ) { tree.select('pointId').apply(next);}
       else if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
       else if ( event.which == 99 ) { tree.select('controls').apply(toogle);}
@@ -104,31 +114,16 @@ function initialize() {
       }
     }
 
-    // var tonerMap = new google.maps.Map(document.getElementById('tonerMap'), {
-    //   center: tree.get('points')[0],
-    //   zoom: 10, streetViewControl: true, mapTypeId: google.maps.MapTypeId.TERRAIN
-    // });
-
-    // replace "toner" here with "terrain" or "watercolor"
     var layer = "toner";
-    var tonerMap = new google.maps.Map(document.getElementById("tonerMap"), {
-        center: new google.maps.LatLng(37.7, -122.4),
-        zoom: 12,
-        mapTypeId: layer,
-        mapTypeControlOptions: {
-            mapTypeIds: [layer]
-        }
-    });
+    var tonerMap = new google.maps.Map(document.getElementById("tonerMap"), {mapTypeId: layer});
     tonerMap.mapTypes.set(layer, new google.maps.StamenMapType(layer));
 
-
     var map = new google.maps.Map(document.getElementById('map'), {
-      center: tree.get('points')[0],
-      zoom: 17, streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
+      streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
     });
 
     var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
-    var sv = new google.maps.StreetViewService();
+    var streetViewService = new google.maps.StreetViewService();
 
     // marker indexation
     var targetMarkerIndex = getMarkers(tree.get('points'), map);
@@ -137,12 +132,9 @@ function initialize() {
     tree.set('controls', false);
     distance.emit('update');
 
+
+
     // MAP UTILS ///////////////////////////////////////////////////////////////
-
-    setInterval(function(){tree.select('pointId').apply(next)},5000);
-
-    var searchZoneCircle = new google.maps.Circle();
-    var picMarkers = [];
 
 
     function onPanorama(data, status) {
@@ -207,7 +199,7 @@ function initialize() {
       tree.set('pitch', pitch + pitchSpeed.get() );
     }
 
-    // INSTAGRAM
+    // INSTAGRAM ///////////////////////////////////////////////////////////////
     function updateInstagram(){
       $('.instagram').instagram({
         search: { lat: tree.get('point','lat'), lng: tree.get('point','lng'), distance: tree.get('distance')},
