@@ -1,5 +1,3 @@
-'use strict';
-
 function initialize() {
   $.getJSON( 'data/refined.json', function(data) {
 
@@ -141,6 +139,11 @@ function initialize() {
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
 
+
+    var searchZoneCircle = new google.maps.Circle();
+    var picMarkers = [];
+
+
     function onPanorama(data, status) {
       if (!_.isNull(data)) {
 
@@ -167,8 +170,6 @@ function initialize() {
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
-        tonerMap.fitBounds(bounds);
-
 
         var line = new google.maps.Polyline({
             path: [viewpointMarker.getPosition(), targetMarker.getPosition()],
@@ -177,6 +178,7 @@ function initialize() {
             strokeWeight: 1 * map.getZoom()/10 ,
             map: map
         });
+
 
         rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
 
@@ -220,6 +222,36 @@ function initialize() {
         return distanceBetweenPoints(p1,p2);
       })
 
+      var targetMarker = targetMarkerIndex[tree.get('pointId')];
+      searchZoneCircle.setMap(null);
+      searchZoneCircle = new google.maps.Circle({
+        strokeColor: '#FF0000',
+        strokeOpacity: 1,
+        strokeWeight: 1,
+        fillOpacity: 0,
+        map: tonerMap,
+        center: targetMarker.getPosition(),
+        radius: tree.get('distance')
+      });
+
+      var bounds = new google.maps.LatLngBounds();
+
+
+      picMarkers.forEach(function(m){ m.setMap(null);})
+
+      response.data.forEach(function(d){
+        var pos = { lat: d.location.latitude, lng: d.location.longitude }
+        var picMarker = new google.maps.Marker({
+          map: tonerMap,
+          position: pos,
+          icon: './assets/images/square.svg'
+        });
+
+        bounds.extend(picMarker.getPosition());
+        picMarkers.push(picMarker);
+      })
+      tonerMap.fitBounds(bounds);
+
       tree.set(['points', function(p){
         return p.id === tree.get('pointId')
       },'activity'], averAge(response.data));
@@ -239,8 +271,13 @@ function initialize() {
     var width = $('#world').width(), height = $('#world').height(),
     svg = d3.select('#world').append('svg:svg').attr('width', width).attr('height', height);
 
+    // svg.append('circle')
+    //     .attr('cx', 0)
+    //     .attr('cy', 0)
+    //     .attr('r', width*1.2)
+    //     .style('fill', 'white');
     var projection = d3.geo.orthographic()
-        .scale(width/2.5)
+        .scale(width/2)
         .translate([width / 2, height / 2])
         .clipAngle(90)
         // .precision(0.5)
@@ -287,7 +324,6 @@ function initialize() {
           .datum(topojson.feature(world, world.objects.land))
           .attr("class", "land")
           .attr("d", path)
-          .style('fill','white')
           ;
 
       pointsCircle.attr('r', 2).style('fill', 'red');

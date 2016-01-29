@@ -6755,10 +6755,7 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-}
-#tonerMap {
-  width: 77%;
-  margin-left: 33%;
+  margin-left: 2%;
 }
 #currentId {
   width: 100%;
@@ -6791,9 +6788,11 @@ h5 {
 }
 .graticule {
   fill: none;
-  stroke: white;
-  stroke-width: .5px;
-  stroke-opacity: .5;
+  stroke: black;
+  stroke-width: 0.5px;
+}
+.land {
+  fill: black;
 }
 .gm-iv-address {
   display: none !important;
