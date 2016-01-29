@@ -28,6 +28,7 @@ function initialize() {
         get: function(data) { return (data.max + data.min)/2 }
       }),
 
+      rotateInterval: 6000,
       controls:null,
       targetMarker:{}
     };
@@ -58,14 +59,13 @@ function initialize() {
         tree.get('controls') ? $("#controls").show() : $("#controls").hide()
      });
 
-
     //
 
     function onPointIdUpdate(e) {
       var point = tree.get('point');
       console.log(point);
 
-      sv.getPanorama({location:point, radius: tree.get('distance')}, processSVData);
+      sv.getPanorama({location:point, radius: tree.get('distance')}, onPanorama);
       map.setCenter(point);
 
       $('#activity').html(templates.activity( tree.get() ));
@@ -79,6 +79,7 @@ function initialize() {
     // INIT ////////////////////////////////////////////////////////////////////
 
     var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
+    var rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
 
     // slides an controls
     $( '#slideId' ).attr('max', tree.get('points').length );
@@ -105,49 +106,22 @@ function initialize() {
       }
     }
 
-    // maps and panorama objects
-
-    // var mapOptions = {};
-    // var tonerMap = L.map('tonerMap', mapOptions).setView([51.505, -0.09], 17);
-
-    // var layerOptions = {
-    //   attribution : 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    //   tilePath : 'http://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
-    //   minZoom:1,
-    // }
-
-    // L.tileLayer(layerOptions.tilePath, layerOptions).addTo(tonerMap);
-
-
-    var tonerMap = new google.maps.Map(document.getElementById('tonerMap'), {
-      center: tree.get('points')[0],
-      zoom: 10, streetViewControl: true, mapTypeId: google.maps.MapTypeId.TERRAIN
-    });
-
-    // var moonMapType = new google.maps.ImageMapType({
-    //       "getTileUrl": function(coord, zoom) {
-
-    //           var subdomains ="a b c d".split(" ");
-    //           var server = "http://stamen-tiles-{S}.tile.stamen.com/toner/{Z}/{X}/{Y}..png";
-
-    //           var numTiles = 1 << zoom,
-    //               wx = coord.x % numTiles,
-    //               x = (wx < 0) ? wx + numTiles : wx,
-    //               y = coord.y,
-    //               index = (zoom + x + y) % subdomains.length;
-    //           return server
-    //               .replace("{S}", subdomains[index])
-    //               .replace("{Z}", zoom)
-    //               .replace("{X}", x)
-    //               .replace("{Y}", y);
-    //       },
-    //       "tileSize": new google.maps.Size(256, 256),
-    //       "name":     'moon',
-    //       "minZoom":  0,
-    //       "maxZoom":  17
+    // var tonerMap = new google.maps.Map(document.getElementById('tonerMap'), {
+    //   center: tree.get('points')[0],
+    //   zoom: 10, streetViewControl: true, mapTypeId: google.maps.MapTypeId.TERRAIN
     // });
 
-    // tonerMap.mapTypes.set('moon', moonMapType);
+    // replace "toner" here with "terrain" or "watercolor"
+    var layer = "toner";
+    var tonerMap = new google.maps.Map(document.getElementById("tonerMap"), {
+        center: new google.maps.LatLng(37.7, -122.4),
+        zoom: 12,
+        mapTypeId: layer,
+        mapTypeControlOptions: {
+            mapTypeIds: [layer]
+        }
+    });
+    tonerMap.mapTypes.set(layer, new google.maps.StamenMapType(layer));
 
 
     var map = new google.maps.Map(document.getElementById('map'), {
@@ -167,39 +141,11 @@ function initialize() {
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
 
-
-    function autoRotate() {
-      if (map.getTilt() !== 0) {
-        var heading = map.getHeading() || 0;
-        map.setHeading(heading + 90);
-      }
-    }
-
-    setInterval(autoRotate, 7000);
-
-
-    function updatePanoramaPov(){
-      panorama.setPov({heading:tree.get('heading'), pitch: tree.get('pitch') });
-      map.setStreetView(panorama);
-      tonerMap.setStreetView(panorama);
-
-    }
-
-    function pitchAnimate(){
-      var pitch = tree.get('pitch');
-
-      if(pitch > tree.get('pitchMax') || pitch < tree.get('pitchMin') ){
-       pitchSpeed.apply(negate);
-      }
-
-      tree.set('pitch', pitch + pitchSpeed.get() );
-    }
-
-    function processSVData(data, status) {
-
+    function onPanorama(data, status) {
       if (!_.isNull(data)) {
 
         clearInterval(pitchAnim);
+        clearInterval(rotateMapAnim);
 
         var viewpointMarker = new google.maps.Marker({ map: map, position: data.location.latLng });
         var targetMarker = targetMarkerIndex[tree.get('pointId')];
@@ -232,13 +178,29 @@ function initialize() {
             map: map
         });
 
-        // map.setZoom(map.getZoom() - 1);
-
-        pitchAnim = setInterval(pitchAnimate,tree.get('pitchInterval'));
+        rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
 
       }else{
         panorama.setVisible(false);
       }
+    }
+
+    function autoRotate() {
+      if (map.getTilt() !== 0) {
+        var heading = map.getHeading() || 0;
+        map.setHeading(heading + 90);
+      }
+    }
+
+    function updatePanoramaPov(){
+      panorama.setPov({heading:tree.get('heading'), pitch: tree.get('pitch') });
+      map.setStreetView(panorama);
+    }
+
+    function pitchAnimate(){
+      var pitch = tree.get('pitch');
+      if(pitch > tree.get('pitchMax') || pitch < tree.get('pitchMin') ) pitchSpeed.apply(negate);
+      tree.set('pitch', pitch + pitchSpeed.get() );
     }
 
     // INSTAGRAM
@@ -408,4 +370,6 @@ Handlebars.registerHelper('debug', function(optionalValue) {
     console.log(optionalValue);
   }
 });
+
+initialize();
 
