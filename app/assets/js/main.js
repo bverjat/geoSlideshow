@@ -139,6 +139,7 @@ function initialize() {
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
 
+    setInterval(function(){tree.select('pointId').apply(next)},5000);
 
     var searchZoneCircle = new google.maps.Circle();
     var picMarkers = [];
@@ -181,6 +182,7 @@ function initialize() {
 
 
         rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
+        pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
 
       }else{
         panorama.setVisible(false);
@@ -227,7 +229,7 @@ function initialize() {
       searchZoneCircle = new google.maps.Circle({
         strokeColor: '#FF0000',
         strokeOpacity: 1,
-        strokeWeight: 1,
+        strokeWeight: 2,
         fillOpacity: 0,
         map: tonerMap,
         center: targetMarker.getPosition(),
@@ -271,28 +273,34 @@ function initialize() {
     var width = $('#world').width(), height = $('#world').height(),
     svg = d3.select('#world').append('svg:svg').attr('width', width).attr('height', height);
 
-    // svg.append('circle')
-    //     .attr('cx', 0)
-    //     .attr('cy', 0)
-    //     .attr('r', width*1.2)
-    //     .style('fill', 'white');
+
     var projection = d3.geo.orthographic()
-        .scale(width/2)
+        .scale(width/2 - 10)
         .translate([width / 2, height / 2])
         .clipAngle(90)
         // .precision(0.5)
 
     var path = d3.geo.path().projection(projection);
+
+    var graticule = d3.geo.graticule();
+
+    svg.append("path")
+      .datum(graticule.outline)
+      .attr("class", "graticule-background")
+      .attr("d", path)
+      ;
+
+
     var worldPath = svg.append("path");
     var pointsCircle = svg.selectAll('.pointsCircle')
         .data(tree.get('points')).enter().append('circle');
 
-    var graticule = d3.geo.graticule();
 
     svg.append("path")
         .datum(graticule)
         .attr("class", "graticule")
         .attr("d", path);
+
 
     function transition() {
       d3.transition()
@@ -309,7 +317,8 @@ function initialize() {
     }
 
     function refreshPosition(){
-      svg.selectAll("path").attr("d", path);
+      svg.selectAll('.graticule, .land').attr('d', path);
+
       pointsCircle
         .attr('cx', function(d){ return projection([d.lng,d.lat])[0]})
         .attr('cy', function(d){ return projection([d.lng,d.lat])[1]})

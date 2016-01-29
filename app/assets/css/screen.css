@@ -6755,7 +6755,11 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  margin-left: 2%;
+  margin-left: 1%;
+}
+#tonerMap {
+  width: 80%;
+  margin-left: 20%;
 }
 #currentId {
   width: 100%;
@@ -6786,12 +6790,15 @@ h5 {
   height: 100%;
   overflow-y: scroll;
 }
-.graticule {
+#world .graticule {
   fill: none;
-  stroke: black;
+  stroke: white;
   stroke-width: 0.5px;
 }
-.land {
+#world .land {
+  fill: white;
+}
+#world .graticule-background {
   fill: black;
 }
 .gm-iv-address {
@@ -6815,6 +6822,7 @@ img[src*="images/google4"] {
   display: none !important;
 }
 img[src*="google_white5"],
+img[src*="api-3/images/sv5.png"],
 img[src*="images/google4"] {
   display: none !important;
 }

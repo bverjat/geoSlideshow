@@ -27,13 +27,13 @@ html, body {
   position: absolute;
   top:0;
   left:0;
-  margin-left: 2%;
+  margin-left: 1%;
   // display: none;
   // background-image: url(../images/whiteGradient.svg);
 }
 #tonerMap {
-  // width: 77%;
-  // margin-left: 33%;
+  width: 80%;
+  margin-left: 20%;
 }
 
 #currentId {
@@ -70,13 +70,23 @@ h5 {
   }
 }
 
-.graticule {
+#world {
+  .graticule {
   fill: none;
-  stroke: black;
+  stroke: white;
   stroke-width: 0.5px;
 }
 
-.land { fill: black;}
+.land { fill: white;}
+
+.graticule-background {
+  fill: black;
+  // stroke-width: 6px;
+  // stroke: white;
+  // stroke-opacity: 0.7;
+}
+}
+
 
 // panorama adress
 .gm-iv-address { display: none !important;}
@@ -90,7 +100,8 @@ h5 {
 // // logos
 img[src*="images/sv4"] { display: none !important; }
 img[src*="white4"], img[src*="images/google4"]{ display: none !important;}
-img[src*="google_white5"], img[src*="images/google4"]{ display: none !important;}
+img[src*="google_white5"],img[src*="api-3/images/sv5.png"], img[src*="images/google4"]{ display: none !important;}
+
 
 
 .grayscale {
