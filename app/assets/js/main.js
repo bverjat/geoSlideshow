@@ -99,6 +99,7 @@ function initialize() {
       if ( event.which == 106 ) { tree.select('pointId').apply(next);}
       else if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
       else if ( event.which == 99 ) { tree.select('controls').apply(toogle);}
+      else if ( event.which == 114 ) { tree.set('pointId', _.random(0,tree.get('points').length));}
     });
 
     // instagram feed listenner
@@ -126,16 +127,14 @@ function initialize() {
     var streetViewService = new google.maps.StreetViewService();
 
     // marker indexation
-    var targetMarkerIndex = getMarkers(tree.get('points'), map);
+    var targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
+    var targetMarkerIndexToner = getMarkers(tree.get('points'), tonerMap, 'antenna-red.svg');
 
     tree.set('pointId', tree.get('points').length/2);
     tree.set('controls', false);
     distance.emit('update');
 
-
-
     // MAP UTILS ///////////////////////////////////////////////////////////////
-
 
     function onPanorama(data, status) {
       if (!_.isNull(data)) {
@@ -246,6 +245,9 @@ function initialize() {
       })
       tonerMap.fitBounds(bounds);
 
+      tonerMap.setZoom(11);
+      tonerMap.setCenter(tree.get('point'))
+
       tree.set(['points', function(p){
         return p.id === tree.get('pointId')
       },'activity'], averAge(response.data));
@@ -258,41 +260,31 @@ function initialize() {
       localStorage.setItem(storageKey,JSON.stringify(tree.serialize()))
     }
 
-
     // TIMELINE VIZ
-
-
     var width = $('#world').width(), height = $('#world').height(),
     svg = d3.select('#world').append('svg:svg').attr('width', width).attr('height', height);
-
 
     var projection = d3.geo.orthographic()
         .scale(width/2 - 10)
         .translate([width / 2, height / 2])
         .clipAngle(90)
-        // .precision(0.5)
 
     var path = d3.geo.path().projection(projection);
-
     var graticule = d3.geo.graticule();
 
     svg.append("path")
       .datum(graticule.outline)
       .attr("class", "graticule-background")
       .attr("d", path)
-      ;
-
 
     var worldPath = svg.append("path");
     var pointsCircle = svg.selectAll('.pointsCircle')
         .data(tree.get('points')).enter().append('circle');
 
-
     svg.append("path")
         .datum(graticule)
         .attr("class", "graticule")
-        .attr("d", path);
-
+        .attr("d", path)
 
     function transition() {
       d3.transition()
@@ -383,9 +375,17 @@ function distanceBetweenPoints(p1, p2) {
 
 
 // create new markers from point array
-function getMarkers(pts, map){
+function getMarkers(pts, map, icon){
  return _(pts).indexBy('id').map(function(p){
-    return new google.maps.Marker({ map: map, position: p, icon: './assets/images/none.svg'});
+
+   var image = {
+      url: './assets/images/'+icon,
+      size: new google.maps.Size(32, 32),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(16,2)
+    };
+
+    return new google.maps.Marker({ map: map, position: p, icon: image});
   }).value()
 }
 
