@@ -6738,16 +6738,17 @@ body {
 #pathway,
 #tonerMap {
   width: 100%;
+  background-color: black !important;
 }
 #tonerMap,
 #world {
-  height: calc(((100% - 150px)/100) * 15 );
+  height: calc(((100% - 300px)/100) * 15 );
 }
 #map {
-  height: calc(((100% - 150px)/100) * 40 );
+  height: calc(((100% - 300px)/100) * 35 );
 }
 #pano {
-  height: calc(((100% - 150px)/100) * 45 );
+  height: calc(((100% - 300px)/100) * 50 );
 }
 #world {
   width: 33%;

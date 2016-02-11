@@ -26,7 +26,10 @@ function initialize() {
         get: function(data) { return (data.max + data.min)/2 }
       }),
 
-      rotateInterval: 6000,
+      slideShowInterval: 15000,
+      slideShowFade: 250,
+
+      rotateInterval: 10000,
       controls:null,
       targetMarker:{},
 
@@ -80,6 +83,7 @@ function initialize() {
 
     var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
     var rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
+    var instagramAnim = setInterval(nextFrame, tree.get('slideShowInterval'));
     var autoVisit = setInterval(function(){tree.select('pointId').apply(next)},tree.get('autoVisitTimer'));
 
     var searchZoneCircle = new google.maps.Circle();
@@ -105,14 +109,17 @@ function initialize() {
     // instagram feed listenner
     $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
 
-    var loop = setInterval(nextFrame, 10000);
-
     function nextFrame(){
-      if($('#instagramFeed img').length > 6){
-        for (var i = 6 - 1; i >= 0; i--) {
-          $('#instagramFeed img:last').after($('#instagramFeed img:first'));
-        };
-      }
+      var imagePerLine = Math.floor($( document ).width() / 150) * 2;
+      console.log(imagePerLine);
+      $('#instagramFeed').fadeOut( tree.get('slideShowFade') , function(){
+        if($('#instagramFeed img').length > imagePerLine){
+          for (var i = imagePerLine - 1; i >= 0; i--) {
+            $('#instagramFeed img:last').after($('#instagramFeed img:first'));
+          };
+        }
+         $('#instagramFeed').fadeIn(tree.get('slideShowFade'));
+      });
     }
 
     var layer = "toner";
@@ -171,7 +178,6 @@ function initialize() {
             map: map
         });
 
-
         rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
         pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
 
@@ -200,6 +206,8 @@ function initialize() {
 
     // INSTAGRAM ///////////////////////////////////////////////////////////////
     function updateInstagram(){
+      $('#instagramFeed').fadeOut(tree.get('slideShowFade'));
+
       $('.instagram').instagram({
         search: { lat: tree.get('point','lat'), lng: tree.get('point','lng'), distance: tree.get('distance')},
         clientId: 'baee48560b984845974f6b85a07bf7d9'
@@ -207,6 +215,10 @@ function initialize() {
     }
 
     function onInstagramDidLoad(event, response, req){
+
+      clearInterval(instagramAnim);
+      $('#instagramFeed').fadeIn(tree.get('slideShowFade'));
+      instagramAnim = setInterval(nextFrame, tree.get('slideShowInterval'));
 
       // sort by distance from current point
       response.data = _.sortBy(response.data, function(d){
