@@ -6733,6 +6733,9 @@ body {
 #instagramFeed {
   height: 150px;
 }
+#instagramFeed .instaImage {
+  width: 12.5%;
+}
 #map,
 #pano,
 #pathway,
@@ -6742,13 +6745,13 @@ body {
 }
 #tonerMap,
 #world {
-  height: calc(((100% - 300px)/100) * 15 );
+  height: calc(((100% - 135px*2)/100) * 15 );
 }
 #map {
-  height: calc(((100% - 300px)/100) * 35 );
+  height: calc(((100% - 135px*2)/100) * 35 );
 }
 #pano {
-  height: calc(((100% - 300px)/100) * 50 );
+  height: calc(((100% - 135px*2)/100) * 50 );
 }
 #world {
   width: 33%;

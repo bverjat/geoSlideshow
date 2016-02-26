@@ -7,6 +7,8 @@ function initialize() {
 
     var storageKey = 'NOF';
     var storageData = {}// JSON.parse(localStorage.getItem(storageKey) || '{}');
+    var toCapture = [44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,500,516,517,539,541,683,698,724,754];
+    var curCapture = 0;
 
     var state = {
       points:getPoints(data.features),
@@ -26,25 +28,29 @@ function initialize() {
         get: function(data) { return (data.max + data.min)/2 }
       }),
 
-      slideShowInterval: 15000,
+      slideShowInterval: 150000* 10000,
       slideShowFade: 250,
 
       rotateInterval: 10000,
       controls:null,
       targetMarker:{},
 
-      autoVisitTimer:60*1000
+      autoVisitTimer:10*1000,
+
+      pois:[44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,
+      364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,
+      500,516,517,539,541,683,698,724,754],
+      poiId:0
+
     };
 
     var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
     window.tree = tree;
 
-    console.log(storageData, tree.get());
+    console.log(tree.get());
 
     var points = tree.select('points')
         points.on('update', updateStorage);
-
-
 
     var pointId = tree.select('pointId');
         pointId.on('update', onPointIdUpdate)
@@ -59,34 +65,22 @@ function initialize() {
     tree.select('pitch').on('update', updatePanoramaPov);
     tree.select('heading').on('update', updatePanoramaPov);
     tree.select('controls').on('update', function(e){
-        tree.get('controls') ? $("#controls").show() : $("#controls").hide()
-     });
-
-    //
-
-    function onPointIdUpdate(e) {
-      var point = tree.get('point');
-      console.log(point);
-
-      streetViewService.getPanorama({location:point, radius: tree.get('distance')}, onPanorama);
-      map.setCenter(point);
-
-      $('#activity').html(templates.activity( tree.get() ));
-      $('#pointInfo').html(templates.pointInfo( tree.get() ));
-      $('#currentId, #slideId').val(tree.get('pointId'));
-
-      updateInstagram();
-      transition();
-    }
+      tree.get('controls') ? $("#controls").show() : $("#controls").hide()
+    });
+    tree.select('poiId').on('update', function(e){
+      var pois = tree.get('pois');
+      tree.set('pointId', pois[ tree.get('poiId') % pois.length]);
+    });
 
     // INIT ////////////////////////////////////////////////////////////////////
 
     var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
     var rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
-    var instagramAnim = setInterval(nextFrame, tree.get('slideShowInterval'));
-    var autoVisit = setInterval(function(){tree.select('pointId').apply(next)},tree.get('autoVisitTimer'));
+    var instagramAnim = setInterval(instaNextFrames, tree.get('slideShowInterval'));
+    var autoVisit = setInterval(function(){tree.select('poiId').apply(next)},tree.get('autoVisitTimer'));
 
     var searchZoneCircle = new google.maps.Circle();
+    var pegmanFov = new google.maps.Polyline();
     var picMarkers = [];
 
     // slides an controls
@@ -100,16 +94,32 @@ function initialize() {
       clearInterval(autoVisit);
       autoVisit = setInterval(function(){tree.select('pointId').apply(next)}, tree.get('autoVisitTimer'));
 
-      if ( event.which == 106 ) { tree.select('pointId').apply(next);}
-      else if ( event.which == 107 ) { tree.select('pointId').apply(prev);}
-      else if ( event.which == 99 ) { tree.select('controls').apply(toogle);}
-      else if ( event.which == 114 ) { tree.set('pointId', _.random(0,tree.get('points').length));}
+      var k = event.which;
+
+      // j or k next/prev point
+      if (k === 106 )       tree.select('pointId').apply(next)
+      else if (k === 107 )  tree.select('pointId').apply(prev)
+
+      // c show/hide controls
+      else if (k === 99 )   tree.select('controls').apply(toogle)
+
+      // r random point
+      else if (k === 114 )  tree.set('pointId', _.random(0,tree.get('points').length))
+
+      // i change instagram images
+      else if (k === 105 )  instaNextFrames()
+
+      // d or f next/prev point of interest
+      else if (k === 100 )  tree.select('poiId').apply(next)
+      else if (k === 102 )  tree.select('poiId').apply(next)
+      else console.log( k )
+
     });
 
     // instagram feed listenner
     $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
 
-    function nextFrame(){
+    function instaNextFrames(){
       var imagePerLine = Math.floor($( document ).width() / 150) * 2;
       console.log(imagePerLine);
       $('#instagramFeed').fadeOut( tree.get('slideShowFade') , function(){
@@ -142,6 +152,22 @@ function initialize() {
     distance.emit('update');
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
+    function onPointIdUpdate(e) {
+      var point = tree.get('point');
+      console.log(point);
+
+      pegmanFov.setMap(null);
+
+      streetViewService.getPanorama({location:point, radius: tree.get('distance')}, onPanorama);
+      map.setCenter(point);
+
+      $('#activity').html(templates.activity( tree.get() ));
+      $('#pointInfo').html(templates.pointInfo( tree.get() ));
+      $('#currentId, #slideId').val(tree.get('pointId'));
+
+      updateInstagram();
+      transition();
+    }
 
     function onPanorama(data, status) {
       if (!_.isNull(data)) {
@@ -161,25 +187,28 @@ function initialize() {
         panorama.setPano(data.location.pano);
         panorama.setVisible(true);
 
-        // unset pegman marker
-        viewpointMarker.setMap(null);
-
         // map bounds
         var bounds = new google.maps.LatLngBounds();
         bounds.extend(viewpointMarker.getPosition());
         bounds.extend(targetMarker.getPosition());
         map.fitBounds(bounds);
 
-        var line = new google.maps.Polyline({
+        pegmanFov.setMap(null);
+        pegmanFov = null;
+
+        pegmanFov = new google.maps.Polyline({
             path: [viewpointMarker.getPosition(), targetMarker.getPosition()],
-            strokeColor: "#FF0000",
+            strokeColor:  "#FF0000",
             strokeOpacity: 1.0,
-            strokeWeight: 1 * map.getZoom()/10 ,
+            strokeWeight: 1 * map.getZoom()/10,
             map: map
         });
 
         rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
         pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
+
+        // unset pegman
+        viewpointMarker.setMap(null);
 
       }else{
         panorama.setVisible(false);
@@ -209,8 +238,11 @@ function initialize() {
       $('#instagramFeed').fadeOut(tree.get('slideShowFade'));
 
       $('.instagram').instagram({
-        search: { lat: tree.get('point','lat'), lng: tree.get('point','lng'), distance: tree.get('distance')},
-        clientId: 'baee48560b984845974f6b85a07bf7d9'
+        search: {
+          lat: tree.get('point','lat'),
+          lng: tree.get('point','lng'),
+          distance: tree.get('distance')
+        },clientId: 'baee48560b984845974f6b85a07bf7d9'
       });
     }
 
@@ -218,7 +250,7 @@ function initialize() {
 
       clearInterval(instagramAnim);
       $('#instagramFeed').fadeIn(tree.get('slideShowFade'));
-      instagramAnim = setInterval(nextFrame, tree.get('slideShowInterval'));
+      instagramAnim = setInterval(instaNextFrames, tree.get('slideShowInterval'));
 
       // sort by distance from current point
       response.data = _.sortBy(response.data, function(d){
@@ -241,8 +273,7 @@ function initialize() {
 
       var bounds = new google.maps.LatLngBounds();
 
-
-      picMarkers.forEach(function(m){ m.setMap(null);})
+      picMarkers.forEach(function(m){ m.setMap(null);} )
 
       response.data.forEach(function(d){
         var pos = { lat: d.location.latitude, lng: d.location.longitude }
@@ -268,11 +299,10 @@ function initialize() {
     }
 
     function updateStorage(){
-      console.log('updateStorage')
       localStorage.setItem(storageKey,JSON.stringify(tree.serialize()))
     }
 
-    // TIMELINE VIZ
+    // TIMELINE VIZ  ///////////////////////////////////////////////////////////
     var width = $('#world').width(), height = $('#world').height(),
     svg = d3.select('#world').append('svg:svg').attr('width', width).attr('height', height);
 
