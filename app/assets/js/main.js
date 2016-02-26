@@ -97,8 +97,8 @@ function initialize() {
       var k = event.which;
 
       // j or k next/prev point
-      if (k === 106 )       tree.select('pointId').apply(next)
-      else if (k === 107 )  tree.select('pointId').apply(prev)
+      if (k === 106 )       tree.select('pointId').apply(nextPoint)
+      else if (k === 107 )  tree.select('pointId').apply(prevPoint)
 
       // c show/hide controls
       else if (k === 99 )   tree.select('controls').apply(toogle)
@@ -115,6 +115,9 @@ function initialize() {
       else console.log( k )
 
     });
+
+    var nextPoint = function(nb) { return (nb + 1) % tree.get('points').length };
+    var prevPoint = function(nb) { return ((nb - 1) < 0 ? tree.get('points').length : (nb - 1)) };
 
     // instagram feed listenner
     $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
@@ -434,6 +437,7 @@ function getMarkers(pts, map, icon){
 var round = function(nb, prec) {return Number(Math.round(nb+'e'+prec)+'e-'+prec)}
 var next = function(nb) { return nb + 1; };
 var prev = function(nb) { return nb - 1; };
+
 var negate = function(nb) { return -nb; };
 var abs = function(nb) { return Math.abs(nb); };
 var toogle = function(boolean) { return !boolean; };
