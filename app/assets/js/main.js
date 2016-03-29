@@ -28,14 +28,14 @@ function initialize() {
         get: function(data) { return (data.max + data.min)/2 }
       }),
 
-      slideShowInterval: 150000* 10000,
+      slideShowInterval: 150000 * 10000,
       slideShowFade: 250,
 
       rotateInterval: 10000,
       controls:null,
       targetMarker:{},
 
-      autoVisitTimer:10*1000,
+      autoVisitTimer:120 * 1000,
 
       pois:[44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,
       364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,
@@ -143,6 +143,8 @@ function initialize() {
       streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
     });
 
+    google.maps.event.addListener(map, "rightclick", updatePostion);
+
     var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
     var streetViewService = new google.maps.StreetViewService();
 
@@ -216,6 +218,22 @@ function initialize() {
       }else{
         panorama.setVisible(false);
       }
+    }
+
+    function updatePostion(event){
+
+      // update
+      tree.set(['points',tree.get('pointId'),'lat'], event.latLng.lat())
+      tree.set(['points',tree.get('pointId'),'lng'], event.latLng.lng())
+
+      // display update
+      targetMarkerIndex.forEach(function(m){ m.setMap(null)})
+      targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
+      pointId.emit('update');
+
+      // save data WIP
+      download(JSON.stringify(pointToJson(tree.get('points'))), (Date.now())+".json", "application/json");
+
     }
 
     function autoRotate() {
@@ -390,13 +408,13 @@ function averAge(data){
 function getPoints(data){
   return _(data)
     .filter(function(p){
-      // remove not numeric coordinates
+      // remove non numeric coordinates
       return _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
     })
-    .uniq(function(p){
-      // remove to close points
-      return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
-    })
+    // .uniq(function(p){
+    //   // remove to close points
+    //   return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
+    // })
     .sortBy(function(p){
       return p.geometry.coordinates[0]
     })
@@ -408,10 +426,30 @@ function getPoints(data){
         lng: p.geometry.coordinates[0],
         name: p.properties.name,
         description: p.properties.description,
-        activity:0
+        activity:0,
+        geoJson:p
       }
     })
     .value()
+}
+
+function pointToJson(points){
+
+  var features = _(points).map(function(p){
+
+    var newp = JSON.parse(JSON.stringify(p.geoJson));
+    newp.geometry.coordinates[0] = p.lng;
+    newp.geometry.coordinates[1] = p.lat;
+
+    if(newp.geometry.coordinates[0] !== p.lng) console.log(newp.geometry.coordinates[0], p.lng)
+
+    return newp;
+
+  }).value();
+  return {
+    'type': 'FeatureCollection',
+    'features': features
+  }
 }
 
 function distanceBetweenPoints(p1, p2) {

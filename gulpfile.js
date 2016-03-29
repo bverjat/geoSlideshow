@@ -13,7 +13,8 @@ var jsFiles = [
   './bower_components/jquery-instagram/dist/instagram.js',
   './bower_components/d3/d3.js',
   './bower_components/topojson/topojson.js',
-  './bower_components/leaflet/dist/leaflet.js'
+  './bower_components/leaflet/dist/leaflet.js',
+  './bower_components/downloadjs/download.js',
   ];
 
 gulp.task('less', function() {
@@ -27,7 +28,7 @@ gulp.task('less', function() {
 gulp.task('build', function() {
   return gulp.src(jsFiles,{base: 'bower_components/'})
     .pipe(concat('lib.min.js'))
-    // .pipe(uglify())
+    .pipe(uglify())
     .pipe(gulp.dest('./app/assets/js/'));
 });
 
