@@ -1,5 +1,8 @@
 function initialize() {
-  $.getJSON( 'data/refined.json', function(data) {
+  // $.getJSON( 'data/edited.json', function(data) {
+  $.ajax('data/data-v2.kml').done(function(xml) {
+
+    var data = toGeoJSON.kml(xml);
 
     // STATE AND TREE //////////////////////////////////////////////////////////
     var templates = getTemplates();
@@ -11,6 +14,13 @@ function initialize() {
     var curCapture = 0;
 
     var state = {
+
+      features: data.features,
+      lines: Baobab.monkey(['features'], function(features){
+        return features.filter(function(f){
+          return f.geometry.type !== 'Point';
+        })
+      }),
       points:getPoints(data.features),
       pointId:0,
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
@@ -44,7 +54,7 @@ function initialize() {
 
     };
 
-    var tree = new Baobab(_.defaults({},storageData,state),{lazyMonkeys:false});
+    var tree = new Baobab(_.defaults({}, storageData, state));
     window.tree = tree;
 
     console.log(tree.get());
@@ -56,10 +66,8 @@ function initialize() {
         pointId.on('update', onPointIdUpdate)
 
     var distance = tree.select('distance');
-        distance.on('update', function(e){
-          updateInstagram();
-          $('#currentDistance, #slideDistance').val(distance.get());
-        })
+        distance.on('update', function(e){ $('#currentDistance, #slideDistance').val(distance.get()) })
+        distance.on('update', updateInstagram)
 
     var pitchSpeed = tree.select('pitchSpeed');
     tree.select('pitch').on('update', updatePanoramaPov);
@@ -81,12 +89,43 @@ function initialize() {
 
     var searchZoneCircle = new google.maps.Circle();
     var pegmanFov = new google.maps.Polyline();
-    var picMarkers = [];
+    var InstaPicMarkers = [];
 
-    // slides an controls
+    // init toner map
+    var layer = "toner";
+    var tonerMap = new google.maps.Map(document.getElementById("tonerMap"), {mapTypeId: layer});
+    tonerMap.mapTypes.set(layer, new google.maps.StamenMapType(layer));
+
+    // init satellite
+    var map = new google.maps.Map(document.getElementById('map'), {
+      streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
+    });
+    // listen to right clic (editor mode)
+    google.maps.event.addListener(map, "rightclick", updatePostion);
+
+    // init panorama and sv
+    var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
+    var streetViewService = new google.maps.StreetViewService();
+
+    // instagram feed listenner
+    $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
+
+    // marker indexation
+    var targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
+    var targetMarkerIndexToner = getMarkers(tree.get('points'), tonerMap, 'antenna-red.svg');
+
+    tree.set('pointId', tree.get('points').length/2);
+    tree.set('controls', false);
+    distance.emit('update');
+
+    // slides an controls listenners
     $( '#slideId' ).attr('max', tree.get('points').length );
     $( '#currentId, #slideId' ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
     $( '#currentDistance, #slideDistance' ).change(function() { tree.set('distance', parseInt( $( this ).val() ) );});
+
+    // APP CONTROLS /////////////////////////////////////////////////////////////
+    var nextPoint = function(nb) { return (nb + 1) % tree.get('points').length };
+    var prevPoint = function(nb) { return ((nb - 1) < 0 ? tree.get('points').length : (nb - 1)) };
 
     // key actions
     $( 'body' ).keypress(function( event ) {
@@ -113,48 +152,7 @@ function initialize() {
       else if (k === 100 )  tree.select('poiId').apply(next)
       else if (k === 102 )  tree.select('poiId').apply(next)
       else console.log( k )
-
     });
-
-    var nextPoint = function(nb) { return (nb + 1) % tree.get('points').length };
-    var prevPoint = function(nb) { return ((nb - 1) < 0 ? tree.get('points').length : (nb - 1)) };
-
-    // instagram feed listenner
-    $('.instagram').on('didLoadInstagram', onInstagramDidLoad);
-
-    function instaNextFrames(){
-      var imagePerLine = Math.floor($( document ).width() / 150) * 2;
-      console.log(imagePerLine);
-      $('#instagramFeed').fadeOut( tree.get('slideShowFade') , function(){
-        if($('#instagramFeed img').length > imagePerLine){
-          for (var i = imagePerLine - 1; i >= 0; i--) {
-            $('#instagramFeed img:last').after($('#instagramFeed img:first'));
-          };
-        }
-         $('#instagramFeed').fadeIn(tree.get('slideShowFade'));
-      });
-    }
-
-    var layer = "toner";
-    var tonerMap = new google.maps.Map(document.getElementById("tonerMap"), {mapTypeId: layer});
-    tonerMap.mapTypes.set(layer, new google.maps.StamenMapType(layer));
-
-    var map = new google.maps.Map(document.getElementById('map'), {
-      streetViewControl: true, mapTypeId: google.maps.MapTypeId.SATELLITE
-    });
-
-    google.maps.event.addListener(map, "rightclick", updatePostion);
-
-    var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));;
-    var streetViewService = new google.maps.StreetViewService();
-
-    // marker indexation
-    var targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
-    var targetMarkerIndexToner = getMarkers(tree.get('points'), tonerMap, 'antenna-red.svg');
-
-    tree.set('pointId', tree.get('points').length/2);
-    tree.set('controls', false);
-    distance.emit('update');
 
     // MAP UTILS ///////////////////////////////////////////////////////////////
     function onPointIdUpdate(e) {
@@ -231,9 +229,10 @@ function initialize() {
       targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
       pointId.emit('update');
 
-      // save data WIP
-      download(JSON.stringify(pointToJson(tree.get('points'))), (Date.now())+".json", "application/json");
+      var geojson = pointToJson(tree.get('points'));
 
+      // save data WIP
+      download(tokml(geojson), (Date.now())+'.kml', 'application/vnd.google-earth.kml+xml');
     }
 
     function autoRotate() {
@@ -294,7 +293,7 @@ function initialize() {
 
       var bounds = new google.maps.LatLngBounds();
 
-      picMarkers.forEach(function(m){ m.setMap(null);} )
+      InstaPicMarkers.forEach(function(m){ m.setMap(null);} )
 
       response.data.forEach(function(d){
         var pos = { lat: d.location.latitude, lng: d.location.longitude }
@@ -305,7 +304,7 @@ function initialize() {
         });
 
         bounds.extend(picMarker.getPosition());
-        picMarkers.push(picMarker);
+        InstaPicMarkers.push(picMarker);
       })
       tonerMap.fitBounds(bounds);
 
@@ -321,6 +320,19 @@ function initialize() {
 
     function updateStorage(){
       localStorage.setItem(storageKey,JSON.stringify(tree.serialize()))
+    }
+
+    function instaNextFrames(){
+      var imagePerLine = Math.floor($( document ).width() / 150) * 2;
+      console.log(imagePerLine);
+      $('#instagramFeed').fadeOut( tree.get('slideShowFade') , function(){
+        if($('#instagramFeed img').length > imagePerLine){
+          for (var i = imagePerLine - 1; i >= 0; i--) {
+            $('#instagramFeed img:last').after($('#instagramFeed img:first'));
+          };
+        }
+         $('#instagramFeed').fadeIn(tree.get('slideShowFade'));
+      });
     }
 
     // TIMELINE VIZ  ///////////////////////////////////////////////////////////
@@ -377,14 +389,12 @@ function initialize() {
       if (error) throw error;
 
       worldPath
-          .datum(topojson.feature(world, world.objects.land))
-          .attr("class", "land")
-          .attr("d", path)
-          ;
+        .datum(topojson.feature(world, world.objects.land))
+        .attr({class:"land",d:path})
 
       pointsCircle.attr('r', 2).style('fill', 'red');
-
     });
+
   }) // load
 } // end initialize
 
@@ -409,17 +419,21 @@ function getPoints(data){
   return _(data)
     .filter(function(p){
       // remove non numeric coordinates
+      // if(p.geometry.type !== 'Point') console.log(p);
+
       return _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
     })
-    // .uniq(function(p){
-    //   // remove to close points
-    //   return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
-    // })
+    .uniq(function(p){
+      // remove to close points
+      return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
+    })
     .sortBy(function(p){
       return p.geometry.coordinates[0]
     })
     .map(function(p , i){
       // get clean object from geojson
+
+
       return {
         id: i,
         lat: p.geometry.coordinates[1],
@@ -434,7 +448,6 @@ function getPoints(data){
 }
 
 function pointToJson(points){
-
   var features = _(points).map(function(p){
 
     var newp = JSON.parse(JSON.stringify(p.geoJson));
@@ -459,7 +472,7 @@ function distanceBetweenPoints(p1, p2) {
 
 // create new markers from point array
 function getMarkers(pts, map, icon){
- return _(pts).indexBy('id').map(function(p){
+  return _(pts).indexBy('id').map(function(p){
 
    var image = {
       url: './assets/images/'+icon,
@@ -492,5 +505,4 @@ Handlebars.registerHelper('debug', function(optionalValue) {
   }
 });
 
-initialize();
-
+initialize()

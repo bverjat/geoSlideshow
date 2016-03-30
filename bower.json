@@ -2,15 +2,10 @@
   "name": "hft-atlas",
   "private": true,
   "dependencies": {
-    "bootstrap-sass": "~3.3.6",
-    "lodash": "~3.10.1",
-    "handlebars": "~4.0.5",
-    "baobab": "~2.3.3",
-    "bootstrap": "~3.3.6",
-    "d3": "~3.5.13",
-    "jquery": "~2.2.0",
-    "jquery-instagram": "~0.3.1",
-    "topojson": "~1.6.20"
+    "downloadjs": "~1.4.2",
+    "tokml": "~0.3.0",
+    "togeojson": "~0.13.0",
+    "leaflet": "~0.7.7"
   },
   "overrides": {
     "bootstrap-sass": {
@@ -20,5 +15,20 @@
         "assets/javascripts/bootstrap.js"
       ]
     }
-  }
+  },
+  "homepage": "https://github.com/bverjat/geoSlideshow",
+  "authors": [
+    "bverjat <qwsx@dcfvg.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
 }

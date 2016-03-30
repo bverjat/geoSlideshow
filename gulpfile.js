@@ -15,6 +15,8 @@ var jsFiles = [
   './bower_components/topojson/topojson.js',
   './bower_components/leaflet/dist/leaflet.js',
   './bower_components/downloadjs/download.js',
+  './bower_components/togeojson/togeojson.js',
+  './bower_components/tokml/tokml.js'
   ];
 
 gulp.task('less', function() {
