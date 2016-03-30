@@ -17,7 +17,7 @@ function initialize() {
     var state = {
       features: formatFeatures(data),
       lines: Baobab.monkey(['features'], function(features){
-        return features.filter(function(f){ return f.geometry.type !== 'Point' })
+        return features.filter(function(f){ return f.geometry.type === 'LineString' })
       }),
       points: Baobab.monkey(['features'], function(features){ return getPoints(features)}),
       pointsOld: getPoints(data.features),
@@ -125,6 +125,36 @@ function initialize() {
     $( '#currentId, #slideId' ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
     $( '#currentDistance, #slideDistance' ).change(function() { tree.set('distance', parseInt( $( this ).val() ) );});
 
+
+    var lineSymbol = {
+      path: 'M 0,-1 0,1',
+      strokeOpacity: 0.5,
+      scale: 1
+    };
+
+    _(tree.get('lines')).forEach(function(l){
+
+        var cur = _(l.geometry.coordinates).map(function(c){
+          return {lat: c[1], lng: c[0]}
+        }).value()
+
+        var flightPath = new google.maps.Polyline({
+          path: cur,
+          geodesic: true,
+          strokeColor: '#FF0000',
+          icons: [{
+            icon: lineSymbol,
+            offset: '0',
+            repeat: '5px'
+          }],
+          strokeOpacity: 0,
+          strokeWeight: 1
+        });
+
+        flightPath.setMap(tonerMap);
+
+    }).value()
+
     // APP CONTROLS /////////////////////////////////////////////////////////////
     var nextPoint = function(nb) { return (nb + 1) % tree.get('points').length };
     var prevPoint = function(nb) { return ((nb - 1) < 0 ? tree.get('points').length : (nb - 1)) };
@@ -204,8 +234,8 @@ function initialize() {
         pegmanFov = new google.maps.Polyline({
             path: [viewpointMarker.getPosition(), targetMarker.getPosition()],
             strokeColor:  "#FF0000",
-            strokeOpacity: 1.0,
-            strokeWeight: 1 * map.getZoom()/10,
+            strokeOpacity: 0.2,
+            strokeWeight: 1 * map.getZoom(),
             map: map
         });
 
@@ -295,7 +325,7 @@ function initialize() {
       searchZoneCircle = new google.maps.Circle({
         strokeColor: '#FF0000',
         strokeOpacity: 1,
-        strokeWeight: 2,
+        strokeWeight: 5,
         fillOpacity: 0,
         map: tonerMap,
         center: targetMarker.getPosition(),
