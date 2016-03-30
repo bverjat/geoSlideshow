@@ -4,24 +4,23 @@ function initialize() {
 
     var data = toGeoJSON.kml(xml);
 
+
+
     // STATE AND TREE //////////////////////////////////////////////////////////
     var templates = getTemplates();
     var monkey = Baobab.monkey;
 
     var storageKey = 'NOF';
     var storageData = {}// JSON.parse(localStorage.getItem(storageKey) || '{}');
-    var toCapture = [44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,500,516,517,539,541,683,698,724,754];
     var curCapture = 0;
 
     var state = {
-
-      features: data.features,
+      features: formatFeatures(data),
       lines: Baobab.monkey(['features'], function(features){
-        return features.filter(function(f){
-          return f.geometry.type !== 'Point';
-        })
+        return features.filter(function(f){ return f.geometry.type !== 'Point' })
       }),
-      points:getPoints(data.features),
+      points: Baobab.monkey(['features'], function(features){ return getPoints(features)}),
+      pointsOld: getPoints(data.features),
       pointId:0,
       point: Baobab.monkey(['pointId'],['points'], function(id, points) {
         return points[id] || null;
@@ -50,6 +49,7 @@ function initialize() {
       pois:[44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,
       364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,
       500,516,517,539,541,683,698,724,754],
+
       poiId:0
 
     };
@@ -59,6 +59,7 @@ function initialize() {
 
     console.log(tree.get());
 
+    // cursors and update
     var points = tree.select('points')
         points.on('update', updateStorage);
 
@@ -70,6 +71,7 @@ function initialize() {
         distance.on('update', updateInstagram)
 
     var pitchSpeed = tree.select('pitchSpeed');
+
     tree.select('pitch').on('update', updatePanoramaPov);
     tree.select('heading').on('update', updatePanoramaPov);
     tree.select('controls').on('update', function(e){
@@ -221,18 +223,27 @@ function initialize() {
     function updatePostion(event){
 
       // update
-      tree.set(['points',tree.get('pointId'),'lat'], event.latLng.lat())
-      tree.set(['points',tree.get('pointId'),'lng'], event.latLng.lng())
+      var currentFeature = tree.select(['features', function(f){ return f.id === tree.get('point','id')}])
+
+      currentFeature.set('lat', event.latLng.lat())
+      currentFeature.set('lng', event.latLng.lng())
+
+      currentFeature.set(['geometry','coordinates',1], event.latLng.lat())
+      currentFeature.set(['geometry','coordinates',0], event.latLng.lng())
 
       // display update
       targetMarkerIndex.forEach(function(m){ m.setMap(null)})
       targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
       pointId.emit('update');
 
-      var geojson = pointToJson(tree.get('points'));
+      var geojson = featuresToGeoJson(tree.get('points'));
+
+      console.log('geojson',geojson)
 
       // save data WIP
       download(tokml(geojson), (Date.now())+'.kml', 'application/vnd.google-earth.kml+xml');
+      download(JSON.stringify(geojson), (Date.now())+'.json', 'application/json');
+
     }
 
     function autoRotate() {
@@ -311,8 +322,8 @@ function initialize() {
       tonerMap.setZoom(11);
       tonerMap.setCenter(tree.get('point'))
 
-      tree.set(['points', function(p){
-        return p.id === tree.get('pointId')
+      tree.set(['features', function(p){
+        return p.id === tree.get('point','id')
       },'activity'], averAge(response.data));
 
       $('#instagramFeed').html(templates.instagramFeed( response ));
@@ -356,10 +367,7 @@ function initialize() {
     var pointsCircle = svg.selectAll('.pointsCircle')
         .data(tree.get('points')).enter().append('circle');
 
-    svg.append("path")
-        .datum(graticule)
-        .attr("class", "graticule")
-        .attr("d", path)
+    svg.append("path").datum(graticule).attr({class:"graticule",d:path})
 
     function transition() {
       d3.transition()
@@ -414,54 +422,52 @@ function averAge(data){
   return Math.floor( Date.now()/1000 - age );
 }
 
+// format features
+function formatFeatures(data){
+
+  return _(data.features)
+    .sortBy(function(f){ return f.geometry.coordinates[1]})
+    .map(function(f, i){
+
+    var position = (f.geometry.type === 'Point' ? {
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0]
+    } : {})
+
+    return _.defaults(f, position, {id:i});
+
+  })
+  .value()
+
+}
+
 // filter and format geojson points
-function getPoints(data){
-  return _(data)
-    .filter(function(p){
-      // remove non numeric coordinates
-      // if(p.geometry.type !== 'Point') console.log(p);
+function getPoints(features){
 
-      return _.isNumber(p.geometry.coordinates[1]) || _.isNumber(p.geometry.coordinates[0]);
-    })
-    .uniq(function(p){
+  return _(features)
+    .filter(function(f){ return f.geometry.type === 'Point' })
+    .filter(function(f){ return _.isNumber(f.lng) || _.isNumber(f.lat);})
+    .uniq(function(f){
       // remove to close points
-      return round(p.geometry.coordinates[1], 2)+','+round(p.geometry.coordinates[0], 2);
-    })
-    .sortBy(function(p){
-      return p.geometry.coordinates[0]
-    })
-    .map(function(p , i){
-      // get clean object from geojson
-
-
-      return {
-        id: i,
-        lat: p.geometry.coordinates[1],
-        lng: p.geometry.coordinates[0],
-        name: p.properties.name,
-        description: p.properties.description,
-        activity:0,
-        geoJson:p
-      }
+      return round(f.lat, 2)+','+round(f.lng, 2);
     })
     .value()
 }
 
-function pointToJson(points){
-  var features = _(points).map(function(p){
+function featuresToGeoJson(features){
 
-    var newp = JSON.parse(JSON.stringify(p.geoJson));
-    newp.geometry.coordinates[0] = p.lng;
-    newp.geometry.coordinates[1] = p.lat;
 
-    if(newp.geometry.coordinates[0] !== p.lng) console.log(newp.geometry.coordinates[0], p.lng)
+  var toSave = JSON.parse(JSON.stringify(features));
 
-    return newp;
+  toSave.forEach(function(f){
+    delete f.lat;
+    delete f.lng;
+    delete f.id;
+  })
 
-  }).value();
   return {
     'type': 'FeatureCollection',
-    'features': features
+    'features': toSave
   }
 }
 

@@ -49,11 +49,10 @@
       <div class="col-xs-2">
         <input type="text" class="form-control" value="{{point.lat}},{{point.lng}}"/>
       </div>
-      <div class="col-xs-4 title">
-        <h5>{{point.name}}</h5>
-        <p>{{{point.description}}}</p>
+      <div class="col-xs-3 title">
+        <h5>{{point.properties.name}}</h5>
+        <p>{{{point.properties.cdescription}}}</p>
       </div>
-
     </script>
 
     <script id="instagramFeed" type="text/x-handlebars-template">
@@ -65,8 +64,6 @@
 
     <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="assets/js/main.js"></script>
-
-
 
     </script>
   </body>
