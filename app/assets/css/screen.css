@@ -6779,6 +6779,15 @@ body {
   background-color: black;
   color: white;
   border-radius: 4px;
+  height: 2.5em;
+  overflow: hidden;
+}
+#controls .title:hover {
+  height: auto;
+  overflow: hidden;
+}
+#controls .bookmarked {
+  background: gold;
 }
 .hide {
   display: none;

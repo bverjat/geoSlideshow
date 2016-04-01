@@ -18,7 +18,9 @@
     <div id="controls">
       <div class="col-xs-1"><input  id="currentId" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
       <div class="col-xs-4"><input id="slideId" class="form-control" type="range" min="0" max="500" step="1" /></div>
-c      <div id="pointInfo"></div>
+<!--       <div class="col-xs-2"><input  id="currentDistance" class="form-control" type="number" maxlength="4" size="4" step="1" ></div>
+      <div class="col-xs-2"><input id="slideDistance" class="form-control" type="range"  min="100" max="5000" step="50" /></div> -->
+      <div id="pointInfo"></div>
     </div>
 
 
@@ -47,10 +49,16 @@ c      <div id="pointInfo"></div>
       <div class="col-xs-2">
         <input type="text" class="form-control" value="{{point.lat}},{{point.lng}}"/>
       </div>
+
       <div class="col-xs-3 title">
         <h5>{{point.properties.name}}</h5>
-        <p>{{{point.properties.cdescription}}}</p>
+        <p>{{{point.properties.description}}}</p>
       </div>
+
+      {{#if point.bookmarked}}
+       <div class="ccol-xs-2 bookmarked"> B </div>
+      {{/if}}
+
     </script>
 
     <script id="instagramFeed" type="text/x-handlebars-template">

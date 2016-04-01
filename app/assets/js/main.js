@@ -195,7 +195,8 @@ function initialize(data) {
 
     // bookmark
     else if (k === 98 ) {
-      currentFeature.set('bookmarked',true)
+      currentFeature.select('bookmarked').apply(toogle);
+       $('#pointInfo').html(templates.pointInfo( tree.get() ))
       dataDump();
     } else console.log( k )
   });
@@ -493,7 +494,7 @@ function getPoints(features){
 
   return _(features)
     .filter(function(f){ return f.geometry.type === 'Point' })
-    .filter(function(f){ return !f.bookmarked })
+    // .filter(function(f){ return !f.bookmarked })
     .filter(function(f){ return _.isNumber(f.lng) || _.isNumber(f.lat);})
     .uniq(function(f){
       // remove to close points
