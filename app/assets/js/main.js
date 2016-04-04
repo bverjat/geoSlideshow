@@ -24,7 +24,7 @@ function initialize(data) {
     lines: Baobab.monkey(['features'], function(features){
       return features.filter(function(f){ return f.geometry.type === 'LineString' })
     }),
-    points: Baobab.monkey(['features'], function(features){ return getPoints(features)}),
+    points: Baobab.monkey(['features'], getPoints),
     pointId:0,
     point: Baobab.monkey(['pointId'],['points'], function(id, points) {
       return points[id] || null;
@@ -58,7 +58,7 @@ function initialize(data) {
 
   };
 
-  var tree = new Baobab(_.defaults({}, storageData, state));
+  var tree = new Baobab(_.defaults({}, storageData, state), {lazyMonkeys: false});
   window.tree = tree;
 
   console.log(tree.get());
@@ -143,7 +143,7 @@ function initialize(data) {
         return {lat: c[1], lng: c[0]}
       }).value();
 
-      if(_.isNumber(cur.lng) || _.isNumber(cur.lat)){
+      if(cur.length > 1){
 
         var line = new google.maps.Polyline({
           path: cur,
@@ -160,8 +160,6 @@ function initialize(data) {
 
         line.setMap(tonerMap);
       }
-
-
   }).value()
 
   // APP CONTROLS /////////////////////////////////////////////////////////////
@@ -249,8 +247,8 @@ function initialize(data) {
       pegmanFov = new google.maps.Polyline({
           path: [viewpointMarker.getPosition(), targetMarker.getPosition()],
           strokeColor:  "#FF0000",
-          strokeOpacity: 0.2,
-          strokeWeight: 1 * map.getZoom(),
+          strokeOpacity: 1,
+          strokeWeight: 1,
           map: map
       });
 
@@ -268,16 +266,16 @@ function initialize(data) {
   function updatePostion(event){
 
     // update
-
     currentFeature.set('lat', event.latLng.lat())
     currentFeature.set('lng', event.latLng.lng())
 
-    currentFeature.set(['geometry','coordinates',1], event.latLng.lat())
+    currentFeature.set(['geometry','coordinates',0], event.latLng.lat())
     currentFeature.set(['geometry','coordinates',0], event.latLng.lng())
 
     // display update
-    targetMarkerIndex.forEach(function(m){ m.setMap(null)})
+    targetMarkerIndex.forEach(function(m){ m.setMap(null) })
     targetMarkerIndex = getMarkers(tree.get('points'), map, 'none.svg');
+
     pointId.emit('update');
 
     dataDump()
@@ -474,7 +472,7 @@ function averAge(data){
 function formatFeatures(data){
 
   return _(data.features)
-    .sortBy(function(f){ return f.geometry.coordinates[1]})
+    .sortBy(function(f){ return f.geometry.coordinates[0]})
     .map(function(f, i){
 
       var position = (f.geometry.type === 'Point' ? {
@@ -485,7 +483,10 @@ function formatFeatures(data){
       return _.defaults(f, position, {id:i});
 
   })
-  .value()
+  .uniq(function(f){
+    // remove to close points
+    return round(f.lat, 2)+','+round(f.lng, 2);
+  }).value()
 
 }
 
@@ -494,17 +495,12 @@ function getPoints(features){
 
   return _(features)
     .filter(function(f){ return f.geometry.type === 'Point' })
-    // .filter(function(f){ return !f.bookmarked })
     .filter(function(f){ return _.isNumber(f.lng) || _.isNumber(f.lat);})
-    .uniq(function(f){
-      // remove to close points
-      return round(f.lat, 2)+','+round(f.lng, 2);
-    })
     .value()
+
 }
 
 function featuresToGeoJson(features){
-
 
   var toSave = JSON.parse(JSON.stringify(features));
 
@@ -512,6 +508,7 @@ function featuresToGeoJson(features){
     delete f.lat;
     delete f.lng;
     delete f.id;
+
   })
 
   return {
