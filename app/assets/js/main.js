@@ -46,7 +46,11 @@ function initialize(data) {
     controls:null,
     targetMarker:{},
 
-    autoVisitTimer:120 * 1000,
+    autoVisitTimer: 3 * 60 * 1000,
+    autoVisitInterval: 30 * 1000,
+    autoVisitCount:0,
+
+    autoReload: 10,
 
     pois:[211,220,366,367,368,369,260,263,359,400,403,406,413,422,423,431,432,
     446,452,453,454,472,363,459,356,353,349,347,345,344,342,341],
@@ -90,7 +94,30 @@ function initialize(data) {
   var pitchAnim = setInterval(pitchAnimate, tree.get('pitchInterval'));
   var rotateMapAnim = setInterval(autoRotate, tree.get('rotateInterval'));
   var instagramAnim = setInterval(instaNextFrames, tree.get('slideShowInterval'));
-  var autoVisit = setInterval(function(){tree.select('poiId').apply(next)},tree.get('autoVisitTimer'));
+
+
+
+  function demoModeNext(){
+    tree.select('pointId').apply(next);
+    tree.select('autoVisitCount').apply(next);
+    if(tree.get('autoVisitCount') > tree.get('autoReload') ) window.location.reload();
+  }
+
+  function demoModeInit(){
+    autoVisitNext = setInterval(demoModeNext, tree.get('autoVisitInterval'));
+  }
+
+  function demoModeStop(){
+    clearInterval(autoVisitNext);
+    clearTimeout(autoVisit);
+
+    tree.set('autoVisitCount',0);
+    autoVisit = setTimeout(demoModeInit, tree.get('autoVisitTimer'));
+  }
+
+  var autoVisit = setTimeout(demoModeInit, tree.get('autoVisitTimer'));
+  var autoVisitNext = setInterval(demoModeNext, tree.get('autoVisitInterval'));
+  demoModeStop();
 
   var searchZoneCircle = new google.maps.Circle();
   var pegmanFov = new google.maps.Polyline();
@@ -128,12 +155,8 @@ function initialize(data) {
   $( '#currentId, #slideId' ).change(function() { tree.set('pointId', parseInt( $( this ).val() ) );});
   $( '#currentDistance, #slideDistance' ).change(function() { tree.set('distance', parseInt( $( this ).val() ) );});
 
-  var lineSymbol = {
-    path: 'M 0,-1 0,1',
-    strokeOpacity: 0.5,
-    scale: 1
-  };
-
+  // draw lines
+  var lineSymbol = { path: 'M 0,-1 0,1', strokeOpacity: 0.5, scale: 1 };
   _(tree.get('lines')).forEach(function(l){
 
       var cur = _(l.geometry.coordinates).map(function(c){
@@ -166,8 +189,7 @@ function initialize(data) {
   // key actions
   $( 'body' ).keypress(function( event ) {
 
-    clearInterval(autoVisit);
-    autoVisit = setInterval(function(){tree.select('pointId').apply(next)}, tree.get('autoVisitTimer'));
+    demoModeStop();
 
     var k = event.which;
 
