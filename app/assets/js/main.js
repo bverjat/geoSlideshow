@@ -50,7 +50,7 @@ function initialize(data) {
     autoVisitInterval: 30 * 1000,
     autoVisitCount:0,
 
-    autoReload: 10,
+    autoReload: 100,
 
     pois:[211,220,366,367,368,369,260,263,359,400,403,406,413,422,423,431,432,
     446,452,453,454,472,363,459,356,353,349,347,345,344,342,341],
