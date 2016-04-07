@@ -1,5 +1,3 @@
-
-
 var datafile = 'data/data-v2.kml';
 var dataType = datafile.split('.').pop().toLowerCase();
 
@@ -34,7 +32,7 @@ function initialize(data) {
 
     pitch: 50,
     pitchSpeed: 0.05,
-    pitchInterval: 100,
+    pitchInterval: 50,
     pitchMax: 40,
     pitchMin: -20,
     pitchCenter:monkey({ cursors: { max: ['pitchMax'], min: ['pitchMin']},
@@ -50,9 +48,8 @@ function initialize(data) {
 
     autoVisitTimer:120 * 1000,
 
-    pois:[44,73,84,93,131,137,152,174,181,184,185,187,286,290,345,346,353,
-    364,367,376,389,390,410,416,427,428,430,432,433,440,453,467,469,487,488,
-    500,516,517,539,541,683,698,724,754],
+    pois:[211,220,366,367,368,369,260,263,359,400,403,406,413,422,423,431,432,
+    446,452,453,454,472,363,459,356,353,349,347,345,344,342,341],
 
     poiId:0
 
@@ -175,8 +172,8 @@ function initialize(data) {
     var k = event.which;
 
     // j or k next/prev point
-    if (k === 106 )       tree.select('pointId').apply(nextPoint)
-    else if (k === 107 )  tree.select('pointId').apply(prevPoint)
+    if (k === 100)       tree.select('pointId').apply(nextPoint)
+    else if (k === 102)  tree.select('pointId').apply(prevPoint)
 
     // c show/hide controls
     else if (k === 99 )   tree.select('controls').apply(toogle)
@@ -188,8 +185,8 @@ function initialize(data) {
     else if (k === 105 )  instaNextFrames()
 
     // d or f next/prev point of interest
-    else if (k === 100 )  tree.select('poiId').apply(next)
-    else if (k === 102 )  tree.select('poiId').apply(next)
+    else if (k === 106 )  tree.select('poiId').apply(next)
+    else if (k === 107 )  tree.select('poiId').apply(next)
 
     // bookmark
     else if (k === 98 ) {
@@ -270,7 +267,7 @@ function initialize(data) {
     currentFeature.set('lng', event.latLng.lng())
 
     currentFeature.set(['geometry','coordinates',0], event.latLng.lat())
-    currentFeature.set(['geometry','coordinates',0], event.latLng.lng())
+    currentFeature.set(['geometry','coordinates',1], event.latLng.lng())
 
     // display update
     targetMarkerIndex.forEach(function(m){ m.setMap(null) })
@@ -284,7 +281,7 @@ function initialize(data) {
 
   function dataDump(){
 
-    var geojson = featuresToGeoJson(tree.get('points'));
+    var geojson = featuresToGeoJson(tree.get('features'));
 
     console.log('geojson',geojson)
 
@@ -437,7 +434,7 @@ function initialize(data) {
       .attr('cx', function(d){ return projection([d.lng,d.lat])[0]})
       .attr('cy', function(d){ return projection([d.lng,d.lat])[1]})
       .transition()
-      .attr('r', function(d){ return d.id === tree.get('pointId') ? 10 : 1  })
+      .attr('r', function(d){ return d.id === tree.get('point').id ? 10 : 1  })
   }
 
   d3.json("assets/images/world-110m.json", function(error, world) {
@@ -485,7 +482,8 @@ function formatFeatures(data){
   })
   .uniq(function(f){
     // remove to close points
-    return round(f.lat, 2)+','+round(f.lng, 2);
+    if(f.geometry.type === 'Point') return round(f.lat, 2)+','+round(f.lng, 2);
+    return f.id
   }).value()
 
 }
@@ -505,8 +503,14 @@ function featuresToGeoJson(features){
   var toSave = JSON.parse(JSON.stringify(features));
 
   toSave.forEach(function(f){
-    delete f.lat;
-    delete f.lng;
+
+    if(f.geometry.type === 'Point') {
+      f.geometry.coordinates[1] = f.lat;
+      f.geometry.coordinates[0] = f.lng;
+      delete f.lat;
+      delete f.lng;
+    }
+
     delete f.id;
 
   })
