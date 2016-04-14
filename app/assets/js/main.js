@@ -1,4 +1,4 @@
-var datafile = 'data/data-v2.kml';
+var datafile = 'data/live.kml';
 var dataType = datafile.split('.').pop().toLowerCase();
 
 console.log('datafile',datafile);
@@ -210,11 +210,12 @@ function initialize(data) {
     else if (k === 106 )  tree.select('poiId').apply(next)
     else if (k === 107 )  tree.select('poiId').apply(next)
 
+    else if (k === 115 )  dataDump()
+
     // bookmark
     else if (k === 98 ) {
       currentFeature.select('bookmarked').apply(toogle);
        $('#pointInfo').html(templates.pointInfo( tree.get() ))
-      dataDump();
     } else console.log( k )
   });
 
@@ -303,7 +304,7 @@ function initialize(data) {
 
   function dataDump(){
 
-    var geojson = featuresToGeoJson(tree.get('features'));
+    var geojson = featuresToGeoJson(tree.get('lines'));
 
     console.log('geojson',geojson)
 
@@ -491,7 +492,7 @@ function averAge(data){
 function formatFeatures(data){
 
   return _(data.features)
-    .sortBy(function(f){ return f.geometry.coordinates[0]})
+    // .sortBy(function(f){ return f.geometry.coordinates[0]})
     .map(function(f, i){
 
       var position = (f.geometry.type === 'Point' ? {
@@ -515,7 +516,8 @@ function getPoints(features){
 
   return _(features)
     .filter(function(f){ return f.geometry.type === 'Point' })
-    .filter(function(f){ return _.isNumber(f.lng) || _.isNumber(f.lat);})
+    .sortBy('id')
+    // .filter(function(f){ return _.isNumber(f.lng) || _.isNumber(f.lat);})
     .value()
 
 }
